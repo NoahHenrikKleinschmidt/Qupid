@@ -135,7 +135,13 @@ def main():
             container.write(dict_to_frame(result), use_container_width=True)
             download_link = generate_download_link(result, "-".join(run_names), analysis)
             container.markdown(download_link, unsafe_allow_html=True)
+        
+        show_citations(container2)
+        container2.write("""
+        And check out the <a href = "https://github.com/NoahHenrikKleinschmidt/qpcr-Analyser.git"> GitHub repo </a> for more information.
+        """)
     except Exception as e: pass #st.write(e)
+
 
 def convert_to_stats(mode, result):
     if mode == "stats":
@@ -187,6 +193,12 @@ def zip_compiler(result, print_figs):
             csv = csv.to_csv(buf)
             name = "{}.csv".format(d)
             zf.writestr(name, data=buf.getvalue())
+
+
+def show_citations(container):
+    container.write("If you use this app to analyse your data, please, cite:")
+    citation = """Kleinschmidt, N. (2021). qpcr-Analyser -- a web-based application to facilitate qPCR data analysis (Version 0.0.1) [Computer software]. https://github.com/NoahHenrikKleinschmidt/qpcr-Analyser.git"""
+    container.write(citation)
 
 
 if __name__=="__main__":

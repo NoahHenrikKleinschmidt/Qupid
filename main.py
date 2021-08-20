@@ -138,7 +138,7 @@ def main():
         
     except Exception as e: pass #st.write(e)
 
-    col2.markdown('And check out the <a href = "https://github.com/NoahHenrikKleinschmidt/qpcr-Analyser.git"> GitHub repo </a> for more information.')
+    col2.markdown('And check out the <a href="https://github.com/NoahHenrikKleinschmidt/qpcr-Analyser.git"> GitHub repo </a> for more information.')
 
 
 def convert_to_stats(mode, result):

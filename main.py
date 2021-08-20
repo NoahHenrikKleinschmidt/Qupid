@@ -60,7 +60,7 @@ def main():
     # setup the analysis controls in the second column 
 
     col2.markdown("""## Available Analysis
-    ---
+    ***
     """)
 
     # single delta ct analysis – basically normalisation within one data-file

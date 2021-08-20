@@ -138,6 +138,10 @@ def main():
         
     except Exception as e: pass #st.write(e)
 
+    citation = """Kleinschmidt, N. (2021). qpcr-Analyser -- a web-based application to facilitate qPCR data analysis (Version 0.0.1) [Computer software]. https://github.com/NoahHenrikKleinschmidt/qpcr-Analyser.git"""
+    col2.markdown("""
+    When using this app to analyse your data, please cite: \n {}
+    """.format(citation))
     col2.markdown('And check out the <a href="https://github.com/NoahHenrikKleinschmidt/qpcr-Analyser.git"> GitHub repo </a> for more information.')
 
 
@@ -191,12 +195,6 @@ def zip_compiler(result, print_figs):
             csv = csv.to_csv(buf)
             name = "{}.csv".format(d)
             zf.writestr(name, data=buf.getvalue())
-
-
-def show_citations(container):
-    container.write("If you use this app to analyse your data, please, cite:")
-    citation = """Kleinschmidt, N. (2021). qpcr-Analyser -- a web-based application to facilitate qPCR data analysis (Version 0.0.1) [Computer software]. https://github.com/NoahHenrikKleinschmidt/qpcr-Analyser.git"""
-    container.write(citation)
 
 
 if __name__=="__main__":

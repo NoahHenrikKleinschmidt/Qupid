@@ -9,7 +9,9 @@ from data_analysis import *
 
 def main():
     st.title("qPCR Analysis Tool")
-
+    st.markdown("""
+        ---
+        """)
     # get the input data files
     expander = st.expander("Upload your files here")
     e_col1, e_col2 = expander.columns(2)

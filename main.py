@@ -137,12 +137,14 @@ def main():
             container.markdown(download_link, unsafe_allow_html=True)
         
     except Exception as e: pass #st.write(e)
-
-    if result: 
-        citation = """Kleinschmidt, N. (2021). qpcr-Analyser -- a web-based application to facilitate qPCR data analysis (Version 0.0.1) [Computer software]. https://github.com/NoahHenrikKleinschmidt/qpcr-Analyser.git"""
-        col2.markdown("""
-        When using this app to analyse your data, please cite: \n\n {}
-        """.format(citation))
+    
+    try: 
+        if result: 
+            citation = """Kleinschmidt, N. (2021). qpcr-Analyser -- a web-based application to facilitate qPCR data analysis (Version 0.0.1) [Computer software]. https://github.com/NoahHenrikKleinschmidt/qpcr-Analyser.git"""
+            col2.markdown("""
+            When using this app to analyse your data, please cite: \n\n {}
+            """.format(citation))
+    except: pass
 
 
 def convert_to_stats(mode, result):

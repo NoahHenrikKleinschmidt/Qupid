@@ -136,8 +136,8 @@ def main():
             download_link = generate_download_link(result, "-".join(run_names), analysis)
             container.markdown(download_link, unsafe_allow_html=True)
         
-        show_citations(container2)
-        container2.write("""
+        show_citations(col2)
+        col2.write("""
         And check out the <a href = "https://github.com/NoahHenrikKleinschmidt/qpcr-Analyser.git"> GitHub repo </a> for more information.
         """)
     except Exception as e: pass #st.write(e)

@@ -124,6 +124,12 @@ def main():
     container2 = st.container()
 
     try: 
+        try:
+            container2.markdown("""
+            ---
+            """)
+        except: pass
+        
         if analysis[0] == "Single Delta CT":
             display_results_singleCT(container2, mode, analysis, result, result_filename)
         elif analysis[0] == "Delta Delta CT":
@@ -137,7 +143,7 @@ def main():
             container.markdown(download_link, unsafe_allow_html=True)
         
     except Exception as e: pass #st.write(e)
-    
+
     try: 
         if result: 
             citation = """Kleinschmidt, N. (2021). qpcr-Analyser -- a web-based application to facilitate qPCR data analysis (Version 0.0.1) [Computer software]. https://github.com/NoahHenrikKleinschmidt/qpcr-Analyser.git"""

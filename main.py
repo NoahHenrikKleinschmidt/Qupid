@@ -124,12 +124,11 @@ def main():
     container2 = st.container()
 
     try: 
-        try:
-            container2.markdown("""
-            ---
-            """)
-        except: pass
         
+        container2.markdown("""
+        ---
+        """)
+       
         if analysis[0] == "Single Delta CT":
             display_results_singleCT(container2, mode, analysis, result, result_filename)
         elif analysis[0] == "Delta Delta CT":

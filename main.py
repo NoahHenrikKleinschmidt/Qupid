@@ -141,8 +141,8 @@ def main():
             print_figs = display_results_ddCT(container2, mode, analysis, result)            
             zip_result = convert_to_stats(mode, result)
             link = zip_compiler(zip_result, print_figs)
-            col2.markdown(link, unsafe_allow_html=True)
-            
+            st.markdown(link, unsafe_allow_html=True)
+
         elif analysis[0] == "combine":
             container.write(dict_to_frame(result), use_container_width=True)
             download_link = generate_download_link(result, "-".join(run_names), analysis)

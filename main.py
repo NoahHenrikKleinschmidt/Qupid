@@ -202,7 +202,7 @@ def zip_compiler(result, print_figs):
             buf = io.BytesIO()
             f.savefig(buf, dpi=150)
             plt.close()
-            zf.writestr(name, data=buf.getbuffer())
+            zf.writestr(name, data=buf.getvalue())
                 
         # store the dict entries as csv files
         for d in result:

@@ -138,7 +138,6 @@ def main():
         if analysis[0] == "Single Delta CT":
             display_results_singleCT(container2, mode, analysis, result, result_filename)
         elif analysis[0] == "Delta Delta CT":
-            container2.markdown("Your results have been compiled into a ZIP file and placed in your Downloads folder")
             print_figs = display_results_ddCT(container2, mode, analysis, result)            
             zip_result = convert_to_stats(mode, result)
             link = zip_compiler(zip_result, print_figs)
@@ -193,9 +192,11 @@ def display_results_ddCT(container, mode, analysis, result):
 
 
 def zip_compiler(result, print_figs):
+    st.markdown("Your results have been compiled into a ZIP file:")
     now_string = datetime.now()
     now_string = now_string.strftime("%d%m%Y_%H%M%S")
     filename = "results_{}.zip".format("", now_string)
+    st.write(filename)
     with zipfile.ZipFile(filename, mode="w") as zf:
         # store figures
         for f in print_figs:

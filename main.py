@@ -195,7 +195,7 @@ def zip_compiler(result, print_figs):
     st.markdown("Your results have been compiled into a ZIP file:")
     now_string = datetime.now()
     now_string = now_string.strftime("%d%m%Y_%H%M%S")
-    filename = "results_{}.zip".format("", now_string)
+    filename = "results_{}.zip".format(now_string)
     st.write(filename)
     with zipfile.ZipFile(filename, mode="w") as zf:
         # store figures

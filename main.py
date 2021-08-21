@@ -212,9 +212,9 @@ def zip_compiler(result, print_figs):
             csv = csv.to_csv(buf)
             name = "{}.csv".format(d)
             zf.writestr(name, data=buf.getvalue())
+    
+        st.write(generate_zip_download_link(zf))
         
-        link = generate_zip_download_link(zf)
-        return link
 
 if __name__=="__main__":
     main()

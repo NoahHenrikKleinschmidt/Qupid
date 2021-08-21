@@ -7,6 +7,7 @@ import base64
 import streamlit as st
 import zipfile
 import io
+import shutil
 import matplotlib.pyplot as plt
 import statistics as stat
 from datetime import datetime 
@@ -124,6 +125,24 @@ def generate_zip_download_link(zip):
     b64 = base64.b64encode(z.encode()).decode()
     href = f'<a href="data:file/zip;base64,{b64}" download="{filename}">Download Results as ZIP</a>'
     return href
+
+
+# make a zip download link
+def create_download_zip(zip_directory, zip_path, filename='foo.zip'):
+    """ 
+        zip_directory (str): path to directory  you want to zip 
+        zip_path (str): where you want to save zip file
+        filename (str): download filename for user who download this
+    """
+    shutil.make_archive(zip_path, 'zip', zip_directory)
+    with open(zip_path, 'rb') as f:
+        bytes = f.read()
+        b64 = base64.b64encode(bytes).decode()
+        href = f'<a href="data:file/zip;base64,{b64}" download=\'{filename}\'>\
+            download file \
+        </a>'
+        return href
+        #st.markdown(href, unsafe_allow_html=True)
 
 # generate run_names
 def generate_run_names(target_files, normaliser):

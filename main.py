@@ -191,7 +191,7 @@ def display_results_ddCT(container, mode, analysis, result):
 # generate a zip download link for results
 
 def zip_compiler(container, result, print_figs):
-    container.markdown("Your results have been compiled into a ZIP file:")
+    container.markdown("Your results have been compiled into a ZIP file: \n --- ")
     now_string = datetime.now()
     now_string = now_string.strftime("%d%m%Y_%H%M%S")
     filename = "results_{}.zip".format(now_string)

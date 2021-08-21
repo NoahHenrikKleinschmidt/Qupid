@@ -158,7 +158,7 @@ def main():
     When using this app to analyse your data, please cite: \n\n {}
     """.format(citation))
     
-    st.write(target_file[0].name)
+    st.write(target_file[0])
 
 
 def convert_to_stats(mode, result):

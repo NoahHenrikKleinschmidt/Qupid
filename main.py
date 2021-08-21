@@ -158,8 +158,6 @@ def main():
     When using this app to analyse your data, please cite: \n\n {}
     """.format(citation))
     
-    st.write(target_file[0])
-
 
 def convert_to_stats(mode, result):
     if mode == "stats":
@@ -216,8 +214,13 @@ def zip_compiler(result, print_figs):
             name = "{}.csv".format(d)
             zf.writestr(name, data=buf.getvalue())
 
-        # now the download link
-        create_download_zip(directory, filename)
+        # now download link
+        b64 = base64.b64encode(zf).decode()
+        href = f'<a href="data:file/zip;base64,{b64}" download=\'{filename}\'>\
+            download file \
+        </a>'
+        st.markdown(href, unsafe_allow_html=True)
+        
 
 if __name__=="__main__":
     main()

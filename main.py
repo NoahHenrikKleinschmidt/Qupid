@@ -140,8 +140,7 @@ def main():
         elif analysis[0] == "Delta Delta CT":
             print_figs = display_results_ddCT(container2, mode, analysis, result)            
             zip_result = convert_to_stats(mode, result)
-            link = zip_compiler(zip_result, print_figs)
-            st.markdown(link, unsafe_allow_html=True)
+            zip_compiler(col1, zip_result, print_figs)
 
         elif analysis[0] == "combine":
             container.write(dict_to_frame(result), use_container_width=True)
@@ -189,13 +188,16 @@ def display_results_ddCT(container, mode, analysis, result):
 
 
 
+# generate a zip download link for results
 
-def zip_compiler(result, print_figs):
-    st.markdown("Your results have been compiled into a ZIP file:")
+def zip_compiler(container, result, print_figs):
+    container.markdown("Your results have been compiled into a ZIP file:")
     now_string = datetime.now()
     now_string = now_string.strftime("%d%m%Y_%H%M%S")
     filename = "results_{}.zip".format(now_string)
     directory = "/tmp/{}".format(filename)
+
+    # generate a tmp zipfile 
     with zipfile.ZipFile(directory, mode="w") as zf:
         # store figures
         for f in print_figs:
@@ -213,17 +215,14 @@ def zip_compiler(result, print_figs):
             csv = csv.to_csv(buf)
             name = "{}.csv".format(d)
             zf.writestr(name, data=buf.getvalue())
+
+    # generate a download link for the tmp zipfile 
     with open(directory, "rb") as zf:
-        # now download link
-        st.write("zf:")
-        st.write(zf)
         b64 = base64.b64encode(zf.read()).decode()
-        st.write("b64:")
-        st.write(b64)
         href = f'<a href="data:file/zip;base64,{b64}" download=\'{filename}\'>\
-            download file \
+            Download results as zip \
         </a>'
-        st.markdown(href, unsafe_allow_html=True)
+        container.markdown(href, unsafe_allow_html=True)
         
 
 if __name__=="__main__":

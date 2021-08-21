@@ -195,8 +195,9 @@ def zip_compiler(result, print_figs):
     now_string = now_string.strftime("%d%m%Y_%H%M%S")
     st.write("Results are compiled as results_{}".format(now_string))
     filename = "{}/Downloads/results_{}.zip".format(Path.home(), now_string)
+    st.write(filename)
     with zipfile.ZipFile(filename, mode="w") as zf:
-                # store figures
+        # store figures
         for f in print_figs:
             name = "{}.jpg".format(f.axes[0].get_title())
             buf = io.BytesIO()
@@ -204,7 +205,7 @@ def zip_compiler(result, print_figs):
             plt.close()
             zf.writestr(name, data=buf.getbuffer())
                 
-                # store the dict entries as csv files
+        # store the dict entries as csv files
         for d in result:
             buf = io.StringIO()
             csv = result[d]

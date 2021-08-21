@@ -158,6 +158,7 @@ def main():
     When using this app to analyse your data, please cite: \n\n {}
     """.format(citation))
     
+    st.write(target_file[0].name)
 
 
 def convert_to_stats(mode, result):
@@ -196,7 +197,7 @@ def zip_compiler(result, print_figs):
     now_string = datetime.now()
     now_string = now_string.strftime("%d%m%Y_%H%M%S")
     filename = "results_{}.zip".format(now_string)
-    directory = "tmp/{filename}"
+    directory = "/tmp/{filename}"
     with zipfile.ZipFile(directory, mode="w") as zf:
         # store figures
         for f in print_figs:
@@ -216,7 +217,7 @@ def zip_compiler(result, print_figs):
             zf.writestr(name, data=buf.getvalue())
 
         # now the download link
-        create_download_zip(zf, directory, filename)
+        create_download_zip(directory, filename)
 
 if __name__=="__main__":
     main()

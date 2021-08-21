@@ -213,11 +213,11 @@ def zip_compiler(result, print_figs):
             csv = csv.to_csv(buf)
             name = "{}.csv".format(d)
             zf.writestr(name, data=buf.getvalue())
-
+    with open(directory, "rb") as zf:
         # now download link
         st.write("zf:")
         st.write(zf)
-        b64 = base64.b64encode(zf.encode()).decode()
+        b64 = base64.b64encode(zf.read()).decode()
         st.write("b64:")
         st.write(b64)
         href = f'<a href="data:file/zip;base64,{b64}" download=\'{filename}\'>\

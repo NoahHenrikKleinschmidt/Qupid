@@ -195,37 +195,28 @@ def zip_compiler(result, print_figs):
     st.markdown("Your results have been compiled into a ZIP file:")
     now_string = datetime.now()
     now_string = now_string.strftime("%d%m%Y_%H%M%S")
-    filename = "tmp/results_{}.zip".format(now_string)
-    st.write(filename)
-    zf = zipfile.ZipFile(filename, mode="w")
-    #with zipfile.ZipFile(filename, mode="w") as zf:
-    # store figures
-    for f in print_figs:
-        name = "{}.jpg".format(f.axes[0].get_title())
-        buf = io.BytesIO()
-        f.savefig(buf, dpi=150)
-        plt.close()
-        zf.writestr(name, data=buf.getvalue())
+    filename = "results_{}.zip".format(now_string)
+    directory = "tmp/{filename}"
+    with zipfile.ZipFile(directory, mode="w") as zf:
+        # store figures
+        for f in print_figs:
+            name = "{}.jpg".format(f.axes[0].get_title())
+            buf = io.BytesIO()
+            f.savefig(buf, dpi=150)
+            plt.close()
+            zf.writestr(name, data=buf.getvalue())
 
-    # store the dict entries as csv files
-    for d in result:
-        buf = io.StringIO()
-        csv = result[d]
-        csv = pd.DataFrame(csv)
-        csv = csv.to_csv(buf)
-        name = "{}.csv".format(d)
-        zf.writestr(name, data=buf.getvalue())
+        # store the dict entries as csv files
+        for d in result:
+            buf = io.StringIO()
+            csv = result[d]
+            csv = pd.DataFrame(csv)
+            csv = csv.to_csv(buf)
+            name = "{}.csv".format(d)
+            zf.writestr(name, data=buf.getvalue())
 
-    with open(filename, "rb") as z:
         # now the download link
-        r = z.read()
-        b64 = base64.b64encode(r.encode()).decode()
-        st.write(b64)
-
-        href = href = f'<a href="data:file/zip;base64,{b64}" download=\'{filename}.zip\'>\
-        Click to download\
-    </a>'
-        st.write(href)
+        create_download_zip(zf, directory, filename)
 
 if __name__=="__main__":
     main()

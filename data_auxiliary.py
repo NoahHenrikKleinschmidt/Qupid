@@ -141,8 +141,7 @@ def create_download_zip(zip_directory, zip_path, filename='foo.zip'):
         href = f'<a href="data:file/zip;base64,{b64}" download=\'{filename}\'>\
             download file \
         </a>'
-        return href
-        #st.markdown(href, unsafe_allow_html=True)
+        st.markdown(href, unsafe_allow_html=True)
 
 # generate run_names
 def generate_run_names(target_files, normaliser):

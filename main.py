@@ -215,7 +215,9 @@ def zip_compiler(result, print_figs):
             zf.writestr(name, data=buf.getvalue())
 
         # now download link
+        st.write(zf)
         b64 = base64.b64encode(zf).decode()
+        st.write(b64)
         href = f'<a href="data:file/zip;base64,{b64}" download=\'{filename}\'>\
             download file \
         </a>'

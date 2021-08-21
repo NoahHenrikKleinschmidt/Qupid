@@ -8,7 +8,7 @@ from data_auxiliary import *
 from data_analysis import *
 
 def main():
-    st.title("qPCR Analyser")
+    st.title("qPCR-Analyser")
     st.markdown("""
         ---
         """)

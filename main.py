@@ -188,7 +188,7 @@ def display_results_ddCT(container, mode, analysis, result):
 
 
 
-# generate a zip download link for results
+# generate a zip download link for results << this one WORKS :-)
 
 def zip_compiler(container, result, print_figs):
     container.markdown(" --- \nYour results have been compiled into a ZIP file:")

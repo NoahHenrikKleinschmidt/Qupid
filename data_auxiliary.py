@@ -117,31 +117,6 @@ def generate_download_link(results_dict, filename, analysis):
     href = f'<a href="data:file/csv;base64,{b64}" download="{filename}">Download Results as CSV</a>'
     return href
 
-# generate a zip download link
-
-def generate_zip_download_link(zip):
-    z = zip.read()
-    filename = "results_{}.zip".format(datetime.now().strftime(("%d%m%Y_%H%M%S")))
-    b64 = base64.b64encode(z.encode()).decode()
-    href = f'<a href="data:file/zip;base64,{b64}" download="{filename}">Download Results as ZIP</a>'
-    return href
-
-
-# make a zip download link
-def create_download_zip(zip_directory, zip_path, filename='foo.zip'):
-    """ 
-        zip_directory (str): path to directory  you want to zip 
-        zip_path (str): where you want to save zip file
-        filename (str): download filename for user who download this
-    """
-    shutil.make_archive(zip_path, 'zip', zip_directory)
-    with open(zip_path, 'rb') as f:
-        bytes = f.read()
-        b64 = base64.b64encode(bytes).decode()
-        href = f'<a href="data:file/zip;base64,{b64}" download=\'{filename}\'>\
-            download file \
-        </a>'
-        st.markdown(href, unsafe_allow_html=True)
 
 # generate run_names
 def generate_run_names(target_files, normaliser):

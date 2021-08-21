@@ -3,6 +3,7 @@ import pandas as pd
 import qpcr
 from copy import deepcopy
 from pathlib import Path
+from datetime import datetime 
 
 from data_auxiliary import * 
 from data_analysis import *
@@ -190,7 +191,8 @@ def display_results_ddCT(container, mode, analysis, result):
 
 
 def zip_compiler(result, print_figs):
-    filename = "{}/Downloads/results.zip".format(Path.home())
+    now_string = datetime.now().strftime("%d-%m-%Y_%H:%M%s")
+    filename = "{}/Downloads/results_{}.zip".format(Path.home(), now_string)
     with zipfile.ZipFile(filename, mode="w") as zf:
                 # store figures
         for f in print_figs:

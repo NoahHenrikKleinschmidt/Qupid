@@ -3,7 +3,6 @@ import pandas as pd
 import qpcr
 from copy import deepcopy
 from pathlib import Path
-from datetime import datetime 
 
 from data_auxiliary import * 
 from data_analysis import *
@@ -141,7 +140,9 @@ def main():
             container2.markdown("Your results have been compiled into a ZIP file and placed in your Downloads folder")
             print_figs = display_results_ddCT(container2, mode, analysis, result)            
             zip_result = convert_to_stats(mode, result)
-            zip_compiler(zip_result, print_figs)
+            link = zip_compiler(zip_result, print_figs)
+            col2.markdown(link, unsafe_allow_html=True)
+            
         elif analysis[0] == "combine":
             container.write(dict_to_frame(result), use_container_width=True)
             download_link = generate_download_link(result, "-".join(run_names), analysis)
@@ -193,9 +194,7 @@ def display_results_ddCT(container, mode, analysis, result):
 def zip_compiler(result, print_figs):
     now_string = datetime.now()
     now_string = now_string.strftime("%d%m%Y_%H%M%S")
-    st.write("Results are compiled as results_{}".format(now_string))
-    filename = "{}/Downloads/results_{}.zip".format("", now_string)
-    st.write(filename)
+    filename = "results_{}.zip".format("", now_string)
     with zipfile.ZipFile(filename, mode="w") as zf:
         # store figures
         for f in print_figs:
@@ -213,7 +212,9 @@ def zip_compiler(result, print_figs):
             csv = csv.to_csv(buf)
             name = "{}.csv".format(d)
             zf.writestr(name, data=buf.getvalue())
-
+        
+        link = generate_zip_download_link(zf)
+        return link
 
 if __name__=="__main__":
     main()

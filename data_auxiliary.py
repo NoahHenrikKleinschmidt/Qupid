@@ -9,6 +9,7 @@ import zipfile
 import io
 import matplotlib.pyplot as plt
 import statistics as stat
+from datetime import datetime 
 
 # all of the import data, read data and open file work together, let's not question why...
 def import_data(data_obj):
@@ -118,8 +119,9 @@ def generate_download_link(results_dict, filename, analysis):
 # generate a zip download link
 
 def generate_zip_download_link(zip):
-    filename = "results.zip"
-    b64 = base64.b64encode(zip.encode()).decode()
+    z = zip.read()
+    filename = "results_{}.zip".format(datetime.now().strftime(("%d%m%Y_%H%M%S")))
+    b64 = base64.b64encode(z.encode()).decode()
     href = f'<a href="data:file/zip;base64,{b64}" download="{filename}">Download Results as ZIP</a>'
     return href
 

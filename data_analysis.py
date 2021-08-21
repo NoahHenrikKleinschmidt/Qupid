@@ -135,7 +135,7 @@ def preprocess_plot_data(data_dict):
 def print_chart(data_dict, mode, analysis, filename):
     labels,heights,yerrs = preprocess_plot_data(data_dict)
     fig,ax = plt.subplots(figsize=(5, 3))
-    ax.bar(labels,heights, color="cornflowerblue", edgecolor="royalblue", width=0.7)
+    ax.bar(labels,heights, color="silver", edgecolor="dimgrey", width=0.7)
     ax.errorbar(labels, heights, yerrs, fmt=".",markersize=0, capsize=5, color="black")
     plt.ylabel(analysis[1], fontsize = 15)
     plt.yticks(fontsize=12)

@@ -3,6 +3,7 @@ import pandas as pd
 import qpcr
 from copy import deepcopy
 from pathlib import Path
+import base64
 
 from data_auxiliary import * 
 from data_analysis import *
@@ -203,7 +204,7 @@ def zip_compiler(result, print_figs):
             f.savefig(buf, dpi=150)
             plt.close()
             zf.writestr(name, data=buf.getvalue())
-                
+
         # store the dict entries as csv files
         for d in result:
             buf = io.StringIO()
@@ -213,8 +214,9 @@ def zip_compiler(result, print_figs):
             name = "{}.csv".format(d)
             zf.writestr(name, data=buf.getvalue())
     
-        st.write(generate_zip_download_link(zf))
-        
+       # now the download link
+        b64 = base64.b64encode(z.encode()).decode()
+        href = f'<a href="data:file/zip;base64,{b64}" download="{filename}">Download Results as ZIP</a>'
 
 if __name__=="__main__":
     main()

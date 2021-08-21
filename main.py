@@ -195,7 +195,7 @@ def zip_compiler(result, print_figs):
     now_string = datetime.now()
     now_string = now_string.strftime("%d%m%Y_%H%M%S")
     filename = "results_{}.zip".format(now_string)
-    directory = "/tmp/{filename}"
+    directory = "/tmp/{}".format(filename)
     with zipfile.ZipFile(directory, mode="w") as zf:
         # store figures
         for f in print_figs:

@@ -220,7 +220,9 @@ def zip_compiler(result, print_figs):
         b64 = base64.b64encode(zf.encode()).decode()
         st.write(b64)
 
-        href = href = f'<a href="data:file/zip;base64,{b64}" download=\'{filename}.zip\'>\Click to download\</a>'
+        href = href = f'<a href="data:file/zip;base64,{b64}" download=\'{filename}.zip\'>\
+        Click to download\
+    </a>'
         st.markdown(href)
 
 if __name__=="__main__":

@@ -192,7 +192,7 @@ def display_results_ddCT(container, mode, analysis, result):
 
 def zip_compiler(result, print_figs):
     now_string = datetime.now()
-    now_string = now_string.strftime("%d%m%Y_%H:%M%S")
+    now_string = now_string.strftime("%d%m%Y_%H%M%S")
     st.write("Results are compiled as results_{}".format(now_string))
     filename = "{}/Downloads/results_{}.zip".format(Path.home(), now_string)
     with zipfile.ZipFile(filename, mode="w") as zf:

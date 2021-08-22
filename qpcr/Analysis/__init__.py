@@ -2,6 +2,8 @@ import qpcr
 import matplotlib.pyplot as plt
 import statistics as stat 
 import qpcr.aux.graphical.auxiliaries as gaux
+import pandas as pd 
+import difflib
 
 #now let us try to warp this all up into a more user friendly package
 def single_deltaCt(data_file, replicates, mode = 'replicate', transpose=True, export=True, group_names=None, stats = ['avg', 'stdv'], anchor = None, dCt_exp = True, exportname_addon=None):
@@ -153,18 +155,22 @@ def normalise_pairs(samples:dict, normalisers:dict, pair_names=None, export=True
     return export_dict
 
 
-def preview_results(results_dict, transpose=False):
+def preview_results(results_dict, transpose=False, figsize = (8,8)):
+    """
+    This function plots the results of all Delta-Delta Ct analyses as individual bar charts into one figure.
+    It returns a matplotlib.pyplot.figure object.
+    """
     results_number = len(list(results_dict.keys()))
     rows, cols = gaux.adjust_layout(graph_number=results_number)
 
     if transpose == True:
         row_count = cols
         col_count = rows
-        fig, axs = plt.subplots(cols, rows, squeeze=False, sharex=True)
+        fig, axs = plt.subplots(cols, rows, squeeze=False, sharex=True, figsize=figsize)
     else:
         row_count = rows
         col_count = cols
-        fig, axs = plt.subplots(rows, cols, squeeze=False)
+        fig, axs = plt.subplots(rows, cols, squeeze=False, figsize=figsize)
     
     coordinates = []
     for r in range(0, row_count):
@@ -197,6 +203,162 @@ def preview_results(results_dict, transpose=False):
 
     fig.tight_layout()
     plt.show()
+    return fig
+
+def make_aggregate_plot(result, figsize=(9,5), colormap = "GnBu_r", title=""):
+    """
+    This function creates a grouped bar chart of all Delta-Delta Ct analyses into one figure. 
+    It returns a figure object.
+    """
+    result_df = _convert_to_stats(result)
+    r = pd.DataFrame() # dataframe for the Ct values
+    stv = pd.DataFrame() # dataframe for the StDevs
+
+    for k in result_df.keys():
+        tmp = pd.DataFrame(result_df[k])
+        del tmp["Legend"] # remove the "Legend" column
+        r[k] = tmp.iloc[0]
+        stv[k] = tmp.iloc[1]
+
+    fig, ax = plt.subplots(figsize=figsize)
+    ax.set(ylabel="$\Delta\Delta C_T$", title=title)
+    r.plot.bar(yerr = stv, ax=ax, colormap = colormap,rot=0, edgecolor = "black", linewidth = 1)
+    plt.close()
+    return fig
+
+# if the result_dict is not yet in stats mode it will be converted into stats
+def _convert_to_stats(result):
+    try: 
+        keys = list(result.keys())
+        tmp = pd.DataFrame(result[keys[0]])
+        tmp["Legend"]
+        result_df = result
+    except:
+        conv_result = {}
+        for k in result:
+            tmp = qpcr.get_stats(result[k])
+            conv_result.update({k : tmp})
+        result_df = conv_result
+    return result_df
+
+
+def make_grouped_plots(result, subplots=True, figsize=(8,8), colormap = "GnBu", transpose=False, no_loners=False):
+    """
+    This function generates grouped barplots for related samples such as "GeneX_ctrl" and "GeneX_treatment". 
+    The function (rather the two _ functions) tries to assess which samples might belong together by reading their run_names (assay names). 
+    If subplot=True is set, it will produce one single figure with subplots (just like preview_results). If subplot=False it will produce one figure for each sample-grouping and return a list of figures.
+    """
+    if subplots == True:
+        # fig will be only one figure
+        fig = _make_grouped_plots_subplots(result, transpose, figsize, colormap, no_loners)
+    elif subplots == False:
+        # fig will be a list of figures !
+        fig = _make_grouped_plots_individuals(result, figsize, colormap, no_loners)
+    return fig
+
+
+def _make_grouped_plots_individuals(result, figsize, colormap, no_loners):
+    """
+    This function creates a grouped bar graph for each sample grouping (stored in the list all_matches). 
+    It will then generate a figure object for each grouping and store and return these as a list.
+    """
+    result_df = _convert_to_stats(result)
+    # extract which samples might belong together
+    all_matches = find_matches(result_df, no_loners)
+
+    figs = []
+    for m in all_matches:
+        r = pd.DataFrame()
+        stv = pd.DataFrame()
+        for k in m:
+            tmp = pd.DataFrame(result_df[k])
+            del tmp["Legend"]
+            r[k] = tmp.iloc[0]
+            stv[k] = tmp.iloc[1]
+        fig, ax = plt.subplots(figsize = figsize)
+        ax.spines["right"].set_visible(False)
+        ax.spines["top"].set_visible(False)
+        ax.set(ylabel="$\Delta\Delta C_T$")
+        r.plot.bar(yerr = stv, ax = ax, colormap = colormap,rot=0, edgecolor = "black", linewidth = 1)
+        figs.append(fig)
+        plt.close()
+    return figs
+
+
+def _make_grouped_plots_subplots(result, transpose, figsize, colormap, no_loners):
+    """
+    This function will generate a grouped bargraph for each sample grouping (stored in the list all_matches) and plot these as subplots into one single figure which is returned.
+    """
+    result_df = _convert_to_stats(result)
+    # extract which samples might belong together
+    all_matches = find_matches(result_df, no_loners)
+
+    # if only one grouping is found just return the individuals plot
+    if len(all_matches) == 1:
+        fig = _make_grouped_plots_individuals(result, figsize, colormap, no_loners)
+        return fig[0]
+
+    # generate a subplots figure
+    rows, cols = gaux.adjust_layout(len(all_matches))
+    coordinates = []
+    if transpose == True:
+        fig, ax = plt.subplots(cols, rows, figsize=figsize)
+        # assemble coordinates for the subplot axes
+        for r in range(cols): 
+            for c in range(rows):
+                coordinates.append([r, c])
+    else:
+        fig, ax = plt.subplots(rows, cols, figsize=figsize)
+        # assemble coordinates for the subplot axes
+        for r in range(rows): 
+            for c in range(cols):
+                coordinates.append([r, c])
+
+    
+    # fill each ax with a grouped bar plot
+    cdx = 0    
+    for m in all_matches:
+
+        r = pd.DataFrame() # dataframe for Ct values (heights)
+        stv = pd.DataFrame() # dataframe for stdevs
+        for k in m:
+            tmp = pd.DataFrame(result_df[k])
+            del tmp["Legend"] # remove the "legend" column
+            r[k] = tmp.iloc[0] # store Cts
+            stv[k] = tmp.iloc[1] # store stdevs
+        
+        # assign coordinate of subplot ax
+        cord = coordinates[cdx]
+        _r, _c = cord[0], cord[1]
+        try: # if the layout is 2-dimensional 
+            ax[_r, _c].set(ylabel="$\Delta\Delta C_T$")
+            r.plot.bar(yerr = stv, ax = ax[_r, _c], colormap=colormap,rot=0, edgecolor = "black", linewidth = 1)
+        except: # if the layout is 1-dimensional
+            try: # depending on if it is transposed or not we need either _r or _c as coordinate 
+                ax[_c].set(ylabel="$\Delta\Delta C_T$")
+                r.plot.bar(yerr = stv, ax = ax[_c], colormap=colormap,rot=0, edgecolor = "black", linewidth = 1)
+            except:
+                ax[_r].set(ylabel="$\Delta\Delta C_T$")
+                r.plot.bar(yerr = stv, ax = ax[_r], colormap=colormap,rot=0, edgecolor = "black", linewidth = 1)
+        fig.tight_layout()
+        plt.close()
+        cdx +=1
+
+    return fig
+
+def find_matches(result_df, no_loners=False):
+    """
+    This function tries to estimate which samples (runs) belong together by estimating the similarity of their run_names.
+    """
+    all_matches = []
+    for k in result_df.keys():
+        matches = difflib.get_close_matches(k, result_df.keys(), cutoff=0.63)
+        matches.sort()
+        if matches not in all_matches: # store groups of related samples as list
+            all_matches.append(matches)
+    if no_loners == True:
+        all_matches = [i for i in all_matches if len(i) > 1]
+    return all_matches
 
 
 def help():

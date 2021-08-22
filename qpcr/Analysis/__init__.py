@@ -371,7 +371,7 @@ def _find_matches_firstonly(result_df, break_at="_", no_loners=False):
     keys = [i.split(break_at) for i in keys]
     keys = [i[0] for i in keys]
     for k in keys:
-        matches = difflib.get_close_matches(k, result_df.keys(), cutoff=0.4)
+        matches = difflib.get_close_matches(k, result_df.keys(), cutoff=0.35)
         matches.sort()
         if matches not in all_matches: # store groups of related samples as list
             all_matches.append(matches)

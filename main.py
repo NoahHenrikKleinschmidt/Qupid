@@ -142,9 +142,9 @@ def main():
             zip_result = convert_to_stats(mode, result)
             zip_compiler(col1, zip_result, print_figs)
 
-            
+            agg_exp = col2.expander("Expand to view aggregate plot")
             fig = qA.make_aggregate_plot(result)
-            col2.pyplot(fig)
+            agg_exp.pyplot(fig)
 
         elif analysis[0] == "combine":
             container.write(dict_to_frame(result), use_container_width=True)

@@ -148,7 +148,8 @@ def main():
 
             print_figs = display_results_ddCT(container2, mode, analysis, result)            
             zip_result = convert_to_stats(mode, result)
-            print_figs.append([fig, fig1])
+            print_figs.append(fig)
+            print_figs.append(fig1)
 
             zip_compiler(col1, zip_result, print_figs)
 

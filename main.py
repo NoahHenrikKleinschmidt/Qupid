@@ -142,6 +142,10 @@ def main():
             agg_exp = container2.expander("Expand to view aggregate plot")
             fig = qA.make_aggregate_plot(result)
             agg_exp.pyplot(fig)
+            grp_exp = container2.expander("Expand to view grouped plots")
+            fig = qA.make_grouped_plots(result)
+            grp_exp.pyplot(fig)
+            
             print_figs = display_results_ddCT(container2, mode, analysis, result)            
             zip_result = convert_to_stats(mode, result)
             zip_compiler(col1, zip_result, print_figs)

@@ -144,7 +144,7 @@ def main():
             agg_exp.pyplot(fig)
             grp_exp = container2.expander("Expand to view grouped plots")
             try: 
-                fig1 = qA.make_grouped_plots(result, subplots=True, match_first_only=False, first_only_delimiter="_rel_")
+                fig1 = qA.make_grouped_plots(result, subplots=True, first_only_delimiter="_rel_")
                 grp_exp.pyplot(fig1)
                 link = generate_dict_download_link(result)
                 grp_exp.markdown("Not quite happy with this figure? \n {} and open them in Figed (tba) – the app to modify the grouped_plots.".format(link), unsafe_allow_html=True)

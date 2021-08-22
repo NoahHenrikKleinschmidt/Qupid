@@ -242,7 +242,7 @@ def _convert_to_stats(result):
     return result_df
 
 
-def make_grouped_plots(result, subplots=True, figsize=(8,8), colormap = "GnBu", transpose=False, no_loners=False):
+def make_grouped_plots(result, subplots=True, figsize=(8,8), colormap = "GnBu", transpose=False, no_loners=False, cutoff=0.63, match_first_only=False, first_only_delimiter = "_"):
     """
     This function generates grouped barplots for related samples such as "GeneX_ctrl" and "GeneX_treatment". 
     The function (rather the two _ functions) tries to assess which samples might belong together by reading their run_names (assay names). 
@@ -250,22 +250,21 @@ def make_grouped_plots(result, subplots=True, figsize=(8,8), colormap = "GnBu", 
     """
     if subplots == True:
         # fig will be only one figure
-        fig = _make_grouped_plots_subplots(result, transpose, figsize, colormap, no_loners)
+        fig = _make_grouped_plots_subplots(result, transpose, figsize, colormap, no_loners, cutoff, match_first_only, break_at = first_only_delimiter)
     elif subplots == False:
         # fig will be a list of figures !
-        fig = _make_grouped_plots_individuals(result, figsize, colormap, no_loners)
+        fig = _make_grouped_plots_individuals(result, figsize, colormap, no_loners, match_first_only, cutoff, break_at = first_only_delimiter)
     return fig
 
 
-def _make_grouped_plots_individuals(result, figsize, colormap, no_loners):
+def _make_grouped_plots_individuals(result, figsize, colormap, no_loners, match_first_only=False, cutoff=0.63, break_at="_"):
     """
     This function creates a grouped bar graph for each sample grouping (stored in the list all_matches). 
     It will then generate a figure object for each grouping and store and return these as a list.
     """
     result_df = _convert_to_stats(result)
     # extract which samples might belong together
-    all_matches = find_matches(result_df, no_loners, first_only=True)
-
+    all_matches = find_matches(result_df, no_loners, match_first_only, cutoff, break_at=break_at)
     figs = []
     for m in all_matches:
         r = pd.DataFrame()
@@ -285,17 +284,17 @@ def _make_grouped_plots_individuals(result, figsize, colormap, no_loners):
     return figs
 
 
-def _make_grouped_plots_subplots(result, transpose, figsize, colormap, no_loners):
+def _make_grouped_plots_subplots(result, transpose, figsize, colormap, no_loners, cutoff=0.63, match_first_only=False, break_at="_"):
     """
     This function will generate a grouped bargraph for each sample grouping (stored in the list all_matches) and plot these as subplots into one single figure which is returned.
     """
     result_df = _convert_to_stats(result)
     # extract which samples might belong together
-    all_matches = find_matches(result_df, no_loners, first_only=True)
+    all_matches = find_matches(result_df, no_loners, match_first_only, cutoff)
 
     # if only one grouping is found just return the individuals plot
     if len(all_matches) == 1:
-        fig = _make_grouped_plots_individuals(result, figsize, colormap, no_loners)
+        fig = _make_grouped_plots_individuals(result, figsize, colormap, no_loners, match_first_only, break_at=break_at)
         return fig[0]
 
     # generate a subplots figure
@@ -335,30 +334,31 @@ def _make_grouped_plots_subplots(result, transpose, figsize, colormap, no_loners
             r.plot.bar(yerr = stv, ax = ax[_r, _c], colormap=colormap,rot=0, edgecolor = "black", linewidth = 1)
         except: # if the layout is 1-dimensional
             # depending on if it is transposed or not we need either _r or _c as coordinate 
-            if transpose == False:
-                ax[_c].set(ylabel="$\Delta\Delta C_T$")
-                r.plot.bar(yerr = stv, ax = ax[_c], colormap=colormap,rot=0, edgecolor = "black", linewidth = 1)
-            else:
+            if transpose==True:
                 ax[_r].set(ylabel="$\Delta\Delta C_T$")
                 r.plot.bar(yerr = stv, ax = ax[_r], colormap=colormap,rot=0, edgecolor = "black", linewidth = 1)
+            else: 
+                ax[_c].set(ylabel="$\Delta\Delta C_T$")
+                r.plot.bar(yerr = stv, ax = ax[_c], colormap=colormap,rot=0, edgecolor = "black", linewidth = 1)
+
         fig.tight_layout()
         plt.close()
         cdx +=1
 
     return fig
 
-def find_matches(result_df, no_loners=False, first_only=False): # only_first splits the keys at _ and looks only at the first entry
+def find_matches(result_df, no_loners=False, first_only=False, cutoff=0.63, break_at="_"): # only_first splits the keys at _ and looks only at the first entry
     """
     This function tries to estimate which samples (runs) belong together by estimating the similarity of their run_names.
     If only_first=True is set the keys are split at _ so only the entry in front of the first _ is checked.
     """
     if first_only == True:
-        all_matches = _find_matches_firstonly(result_df, no_loners=no_loners)
+        all_matches = _find_matches_firstonly(result_df, no_loners=no_loners, cutoff=cutoff, break_at=break_at)
         return all_matches
 
     all_matches = []
     for k in result_df.keys():
-        matches = difflib.get_close_matches(k, result_df.keys(), cutoff=0.63)
+        matches = difflib.get_close_matches(k, result_df.keys(), cutoff=cutoff)
         matches.sort()
         if matches not in all_matches: # store groups of related samples as list
             all_matches.append(matches)
@@ -366,13 +366,14 @@ def find_matches(result_df, no_loners=False, first_only=False): # only_first spl
         all_matches = [i for i in all_matches if len(i) > 1]
     return all_matches
 
-def _find_matches_firstonly(result_df, break_at="_", no_loners=False):
+def _find_matches_firstonly(result_df, break_at="_", no_loners=False, cutoff=0.63):
     all_matches = []
     keys = list(result_df.keys())
     keys = [i.split(break_at) for i in keys]
     keys = [i[0] for i in keys]
+
     for k in keys:
-        matches = difflib.get_close_matches(k, result_df.keys(), cutoff=0.35)
+        matches = difflib.get_close_matches(k, result_df.keys(), cutoff=cutoff)
         matches.sort()
         if matches not in all_matches: # store groups of related samples as list
             all_matches.append(matches)

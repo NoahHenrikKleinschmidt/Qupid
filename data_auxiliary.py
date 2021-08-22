@@ -117,7 +117,14 @@ def generate_download_link(results_dict, filename, analysis):
     href = f'<a href="data:file/csv;base64,{b64}" download="{filename}">Download Results as CSV</a>'
     return href
 
-
+# generate downloadlink for results_dict
+def generate_dict_download_link(results_dict):
+    results_string = str(results_dict)
+    b64 = base64.b64encode(results_string.encode()).decode()
+    filename = "results_dictionary_{}.txt".format(datetime.now())
+    href = f'<a href="data:file/txt;base64,{b64}" download="{filename}">Download Results as txt</a>'
+    return href
+    
 # generate run_names
 def generate_run_names(target_files, normaliser):
     norm_name = remove_suffix(normaliser)

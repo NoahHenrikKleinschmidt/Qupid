@@ -264,7 +264,7 @@ def _make_grouped_plots_individuals(result, figsize, colormap, no_loners):
     """
     result_df = _convert_to_stats(result)
     # extract which samples might belong together
-    all_matches = find_matches(result_df, no_loners)
+    all_matches = find_matches(result_df, no_loners, first_only=True)
 
     figs = []
     for m in all_matches:
@@ -291,7 +291,7 @@ def _make_grouped_plots_subplots(result, transpose, figsize, colormap, no_loners
     """
     result_df = _convert_to_stats(result)
     # extract which samples might belong together
-    all_matches = find_matches(result_df, no_loners)
+    all_matches = find_matches(result_df, no_loners, first_only=True)
 
     # if only one grouping is found just return the individuals plot
     if len(all_matches) == 1:
@@ -353,7 +353,7 @@ def find_matches(result_df, no_loners=False, first_only=False): # only_first spl
     """
     if first_only == True:
         return _find_matches_firstonly(result_df, no_loners=no_loners)
-        
+
     all_matches = []
     for k in result_df.keys():
         matches = difflib.get_close_matches(k, result_df.keys(), cutoff=0.63)

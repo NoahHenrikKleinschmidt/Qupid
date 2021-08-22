@@ -352,7 +352,8 @@ def find_matches(result_df, no_loners=False, first_only=False): # only_first spl
     If only_first=True is set the keys are split at _ so only the entry in front of the first _ is checked.
     """
     if first_only == True:
-        return _find_matches_firstonly(result_df, no_loners=no_loners)
+        all_matches = _find_matches_firstonly(result_df, no_loners=no_loners)
+        return all_matches
 
     all_matches = []
     for k in result_df.keys():

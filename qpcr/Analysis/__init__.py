@@ -329,16 +329,16 @@ def _make_grouped_plots_subplots(result, transpose, figsize, colormap, no_loners
         
         # assign coordinate of subplot ax
         cord = coordinates[cdx]
-        print(cord)
         _r, _c = cord[0], cord[1]
         try: # if the layout is 2-dimensional 
             ax[_r, _c].set(ylabel="$\Delta\Delta C_T$")
             r.plot.bar(yerr = stv, ax = ax[_r, _c], colormap=colormap,rot=0, edgecolor = "black", linewidth = 1)
         except: # if the layout is 1-dimensional
-            try: # depending on if it is transposed or not we need either _r or _c as coordinate 
+            # depending on if it is transposed or not we need either _r or _c as coordinate 
+            if transpose == False:
                 ax[_c].set(ylabel="$\Delta\Delta C_T$")
                 r.plot.bar(yerr = stv, ax = ax[_c], colormap=colormap,rot=0, edgecolor = "black", linewidth = 1)
-            except:
+            else:
                 ax[_r].set(ylabel="$\Delta\Delta C_T$")
                 r.plot.bar(yerr = stv, ax = ax[_r], colormap=colormap,rot=0, edgecolor = "black", linewidth = 1)
         fig.tight_layout()

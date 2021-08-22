@@ -346,10 +346,14 @@ def _make_grouped_plots_subplots(result, transpose, figsize, colormap, no_loners
 
     return fig
 
-def find_matches(result_df, no_loners=False):
+def find_matches(result_df, no_loners=False, first_only=False): # only_first splits the keys at _ and looks only at the first entry
     """
     This function tries to estimate which samples (runs) belong together by estimating the similarity of their run_names.
+    If only_first=True is set the keys are split at _ so only the entry in front of the first _ is checked.
     """
+    if first_only == True:
+        return _find_matches_firstonly(result_df, no_loners=no_loners)
+        
     all_matches = []
     for k in result_df.keys():
         matches = difflib.get_close_matches(k, result_df.keys(), cutoff=0.63)
@@ -360,6 +364,19 @@ def find_matches(result_df, no_loners=False):
         all_matches = [i for i in all_matches if len(i) > 1]
     return all_matches
 
+def _find_matches_firstonly(result_df, break_at="_", no_loners=False):
+    all_matches = []
+    keys = result_df.keys()
+    keys = [i.split(break_at) for i in keys]
+    keys = [i[0] for i in keys]
+    for k in keys:
+        matches = difflib.get_close_matches(k, result_df.keys(), cutoff=0.63)
+        matches.sort()
+        if matches not in all_matches: # store groups of related samples as list
+            all_matches.append(matches)
+    if no_loners == True:
+        all_matches = [i for i in all_matches if len(i) > 1]
+    return all_matches
 
 def help():
     helpstring = """

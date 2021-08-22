@@ -138,13 +138,13 @@ def main():
         if analysis[0] == "Single Delta CT":
             display_results_singleCT(container2, mode, analysis, result, result_filename)
         elif analysis[0] == "Delta Delta CT":
+
+            agg_exp = container2.expander("Expand to view aggregate plot")
+            fig = qA.make_aggregate_plot(result)
+            agg_exp.pyplot(fig)
             print_figs = display_results_ddCT(container2, mode, analysis, result)            
             zip_result = convert_to_stats(mode, result)
             zip_compiler(col1, zip_result, print_figs)
-
-            agg_exp = col2.expander("Expand to view aggregate plot")
-            fig = qA.make_aggregate_plot(result)
-            agg_exp.pyplot(fig)
 
         elif analysis[0] == "combine":
             container.write(dict_to_frame(result), use_container_width=True)

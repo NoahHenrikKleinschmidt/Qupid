@@ -147,7 +147,7 @@ def main():
                 fig1 = qA.make_grouped_plots(result, subplots=True, first_only_delimiter="_rel_")
                 grp_exp.pyplot(fig1)
                 link = generate_dict_download_link(result)
-                grp_exp.markdown("Not quite happy with this figure? \n {} and open them in Figed (tba) – the app to modify the grouped_plots.".format(link), unsafe_allow_html=True)
+                grp_exp.markdown("Not quite happy with this figure? \n {} and open them in [Figed](https://share.streamlit.io/noahhenrikkleinschmidt/figed/main/main.py)  – our app to modify the grouped_plots figure.".format(link), unsafe_allow_html=True)
             except: 
                 pass
 

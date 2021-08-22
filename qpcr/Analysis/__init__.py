@@ -366,7 +366,7 @@ def find_matches(result_df, no_loners=False, first_only=False): # only_first spl
 
 def _find_matches_firstonly(result_df, break_at="_", no_loners=False):
     all_matches = []
-    keys = result_df.keys()
+    keys = list(result_df.keys())
     keys = [i.split(break_at) for i in keys]
     keys = [i[0] for i in keys]
     for k in keys:

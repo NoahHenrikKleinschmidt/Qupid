@@ -143,8 +143,8 @@ def main():
             fig = qA.make_aggregate_plot(result)
             agg_exp.pyplot(fig)
             grp_exp = container2.expander("Expand to view grouped plots")
-            fig = qA.make_grouped_plots(result, subplots=True, transpose=True)
-            grp_exp.pyplot(fig)
+            fig1 = qA.make_grouped_plots(result, subplots=True, transpose=True)
+            grp_exp.pyplot(fig1)
 
             print_figs = display_results_ddCT(container2, mode, analysis, result)            
             zip_result = convert_to_stats(mode, result)

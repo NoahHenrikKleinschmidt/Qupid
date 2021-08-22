@@ -151,8 +151,6 @@ def main():
             except: 
                 pass
 
-            
-
             print_figs = display_results_ddCT(container2, mode, analysis, result)            
             zip_result = convert_to_stats(mode, result)
             print_figs.append(fig)

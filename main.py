@@ -140,7 +140,7 @@ def main():
         elif analysis[0] == "Delta Delta CT":
 
             prev_exp = container2.expander("Expand to view preview plots")
-            prev_fig = qA.preview_results(result)
+            prev_fig = qA.preview_results(result, figsize=None)
             prev_exp.pyplot(prev_fig)
             agg_exp = container2.expander("Expand to view aggregate plot")
             fig = qA.make_aggregate_plot(result)

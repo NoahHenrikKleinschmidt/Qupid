@@ -59,8 +59,8 @@ replicates = controls.number_input(
 
 group_names = controls.text_input(
                                     "Names of Replicate groups",
-                                    placeholder = "control, conditionA, conditionB, ...",
-                                    help = "The names for your groups of replicates (optional). Please, specify names comma-separated."
+                                    placeholder = "control, conditionA, conditionB, ... (optional)",
+                                    help = "The names for your groups of replicates (optional). Please, specify names comma-separated. Note that the names must match the order in which the replicates appear in the dataset."
                                 )
 # pre-process group_names into list or set to None
 group_names = None if group_names == "" else [i.strip() for i in group_names.split(",")]
@@ -107,19 +107,25 @@ if anchor == "specified":
     anchor = new_anchor
 
 # filtering inclusion range
-preset_range = (-1.0, 1.0) if filter_type == "Range" else (-1.5, 1.5)
-inclusion_range = more_controls_expander.slider(
-                                                "Filter Inclusion Range",
-                                                min_value = -10.0, 
-                                                max_value = 10.0, 
-                                                value = preset_range,
-                                                step = 0.1,
-                                                help = "Set the upper and lower boundries for the filter inclusion range. In case of RangeFilter this will be absolute numbers around the group median. In case of IQRFilter this will be factors n x IQR around the group median."
-                                            )
-# ...     'Select a range of values',
-# ...     0.0, 100.0, (25.0, 75.0))
+if filter_type is not None:
+    preset_range = (-1.0, 1.0) if filter_type == "Range" else (-1.5, 1.5)
+    inclusion_range = more_controls_expander.slider(
+                                                    "Filter Inclusion Range",
+                                                    min_value = -10.0, 
+                                                    max_value = 10.0, 
+                                                    value = preset_range,
+                                                    step = 0.1,
+                                                    help = "Set the upper and lower boundries for the filter inclusion range. In case of RangeFilter this will be absolute numbers around the group median. In case of IQRFilter this will be factors n x IQR around the group median."
+                                                )
 
-
+# plotting kwargs setup
+plotting_kwargs = more_controls_expander.text_area(
+                                                    "Plotting parameters",
+                                                    placeholder = """color = 'green'\ntitle = 'my figure'\nfigsize = (8, 3)""",
+                                                    help = "You can specify various plotting arguments to fine-tune the preview figures generated. Note, that this requires some knowledge of either matplotlib's or plotly's accepted arguments for figures and subplots, because the different plotting methods accept different kinds of plotting kwargs. Refer to the documentation of the `qpcr` module for more details."   
+                                                )
+plotting_kwargs = f"dict({plotting_kwargs})".replace("\n", "")
+plotting_kwargs = eval(plotting_kwargs)
 
 # =================================================================
 # Run our analysis
@@ -162,11 +168,16 @@ if run_button and got_data:
             _filter = Filters.RangeFilter()
         elif filter_type == "IQR":
             _filter = Filters.IQRFilter()
+        
+        lower, upper = inclusion_range
+        lower = abs(lower) # because filter range is designed for positive values 
+        _filter.set_lim(upper = upper, lower = lower)
         _filter.plotmode(chart_mode)
         pipeline.add_filters(_filter)
     
     # setup plotter
     _plotter = Plotters.PreviewResults(chart_mode)
+    _plotter.params(**plotting_kwargs)
     _plotter.params(show = False)
     pipeline.add_plotters(_plotter)
 
@@ -175,7 +186,8 @@ if run_button and got_data:
     pipeline.add_normalisers(norm_files)
 
     # run pipeline
-    pipeline.run()
+    with st.spinner("Running analysis..."):
+        pipeline.run()
 
     figures = pipeline.Figures()
 
@@ -195,5 +207,47 @@ if run_button and got_data:
     preview = figures[-1]
     add_figure(preview, preview_expander, chart_mode)
 
+    # generate download buttons
+
+    rep_results = pipeline.get(kind = "df")
+    stats_results = pipeline.get()
+
+    chart.download_button(
+                            "Download Raw Results",
+                            rep_results.to_csv(index = False),
+                            mime = "text/csv",
+                            help = "Download the analysed results retaining all replicates."
+                        )
     
-    
+    chart.download_button(
+                            "Download Summarized Results",
+                            stats_results.to_csv(index = False),
+                            mime = "text/csv",
+                            help = "Download the analysed results summarized to mean and stdev of each replicate group."
+                        )
+
+# =================================================================
+# Footer Section
+# =================================================================
+
+footer = st.container()
+footer.markdown("---")
+foot_left, foot_middle, foot_right = footer.columns(3)
+foot_left.markdown("""
+Qupid is built around the [`qpcr` python module](https://github.com/NoahHenrikKleinschmidt/qpcr) which provides a set of powerful and easy-to-use tools to perform Delta-Delta-Ct analysis on small and large-scale datasets.
+If you wish to automate your qPCR data analysis even more or Qupid isn't quite suited to your needs, you may want to check out what the main `qpcr` module can do for you.
+""")
+
+foot_middle.markdown("""
+Love using Qupid :cupid:?\n 
+Then, consider citing it in your work :hibiscus:. Find the citation [here](https://github.com/NoahHenrikKleinschmidt/qpcr-Analyser/blob/main/CITATION.cff). \n
+Good luck with your research :four_leaf_clover:
+
+""")
+
+foot_right.markdown("""
+Have you discovered a bug? \n
+Oh, shoot, sorry about that... Please, post an [issue on github](https://github.com/NoahHenrikKleinschmidt/qpcr-Analyser/issues) about it. \n
+Thanks :blossom:
+
+""")

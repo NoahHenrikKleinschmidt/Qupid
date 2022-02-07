@@ -111,8 +111,8 @@ if filter_type is not None:
     preset_range = (-1.0, 1.0) if filter_type == "Range" else (-1.5, 1.5)
     inclusion_range = more_controls_expander.slider(
                                                     "Filter Inclusion Range",
-                                                    min_value = -10.0, 
-                                                    max_value = 10.0, 
+                                                    min_value = -5.0, 
+                                                    max_value = 5.0, 
                                                     value = preset_range,
                                                     step = 0.1,
                                                     help = "Set the upper and lower boundries for the filter inclusion range. In case of RangeFilter this will be absolute numbers around the group median. In case of IQRFilter this will be factors n x IQR around the group median."

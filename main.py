@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import qpcr
-from qpcr.Pipes import BasicPlus
+from qpcr.Pipes import _Qupid_Blueprint
 import qpcr.Filters as Filters
 import qpcr.Plotters as Plotters
 
@@ -59,17 +59,44 @@ replicates = controls.number_input(
 
 group_names = controls.text_input(
                                     "Names of Replicate groups",
-                                    placeholder = "control, conditionA, conditionB",
+                                    placeholder = "control, conditionA, conditionB, ...",
                                     help = "The names for your groups of replicates (optional). Please, specify names comma-separated."
                                 )
 # pre-process group_names into list or set to None
 group_names = None if group_names == "" else [i.strip() for i in group_names.split(",")]
+
+# ----------------------------------------------------------------
+# Advances settings like Anchor...
+# ----------------------------------------------------------------
+
+more_controls_expander = controls.expander("Advanced Settings")
+
+anchor = more_controls_expander.selectbox(
+                                            "Select anchor", 
+                                            ["first", "grouped", "specified"],
+                                            help = "The anchor is the intra-dataset reference for the first Delta-Ct. Using 'first' will choose the very first data entry, 'grouped' will use the first entry of each replicate group. Using 'specified' you may pass an externally computed numeric value."
+                                            
+                                        )
+
+# preprocess anchor input (and allow specific entry)
+if anchor == "specified":
+    new_anchor = more_controls_expander.number_input("Specify an anchor value")
+    anchor = new_anchor
+
+
+
+# ----------------------------------------------------------------
+# Generic settings like Filter type and Plotter...
+# ----------------------------------------------------------------
+
 
 filter_type = controls.radio(
                                 "Select Filter", 
                                 ["Range", "IQR", "None"], 
                                 help = "Select which filter to apply before Delta-Delta-Ct computation. By default a Range Filter of +/- 1 around the group median is applied. Alternatively, an IQR filter of 1.5 x IQR around the median can be selected. If None is selected, no filtering will be done."
                             )
+# pre-process filter_type
+filter_type = None if filter_type == "None" else filter_type
 
 chart_mode = controls.radio(
                                 "Select Plotting Mode", 
@@ -87,24 +114,45 @@ run_button = controls.button(
 # Run our analysis
 # =================================================================
 
+def add_figure(fig, container, mode):
+    """
+    Adds a figure to a container...
+    """
+    if mode == "interactive":
+        container.plotly_chart(fig, use_container_width = True)
+    elif mode == "static":
+        container.pyplot(fig, use_container_width = True)
+        
 
 if run_button and got_data:
     
     # setup pipeline
-    pipeline = BasicPlus()
+    pipeline = _Qupid_Blueprint()
     pipeline.replicates(replicates)
     pipeline.names(group_names)
 
+    # setup custom Analyser and Normaliser...
+    # actually, the Normaliser is a default one, 
+    # but it would not work unless specifically added as well... 
+    # (very curious)
+    analyser = qpcr.Analyser()
+    analyser.anchor(anchor)
+    pipeline.Analyser(analyser)
+    pipeline.Normaliser(qpcr.Normaliser())
+
+
     # setup filter
-    if filter_type != "None":
+    if filter_type is not None:
         if filter_type == "Range":
             _filter = Filters.RangeFilter()
         elif filter_type == "IQR":
             _filter = Filters.IQRFilter()
+        _filter.plotmode(chart_mode)
         pipeline.add_filters(_filter)
     
     # setup plotter
     _plotter = Plotters.PreviewResults(chart_mode)
+    _plotter.params(show = False)
     pipeline.add_plotters(_plotter)
 
     # link the data
@@ -114,6 +162,23 @@ if run_button and got_data:
     # run pipeline
     pipeline.run()
 
-    # get results
-    results = pipeline.get()
-    chart.write(results)
+    figures = pipeline.Figures()
+
+    # ----------------------------------------------------------------
+    # Get the Results to be nicely displayed...
+    # ----------------------------------------------------------------
+    
+    # make new expanders for the figures
+
+    if filter_type is not None: 
+        filter_fig_expander = chart.expander("Filter Overview")
+        pre_filter, post_filter = figures[:2]
+        add_figure(pre_filter, filter_fig_expander, chart_mode)
+        add_figure(post_filter, filter_fig_expander, chart_mode)
+
+    preview_expander = chart.expander("Preview Results", expanded = True)
+    preview = figures[-1]
+    add_figure(preview, preview_expander, chart_mode)
+
+    
+    

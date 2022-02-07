@@ -1,248 +1,119 @@
 import streamlit as st
 import pandas as pd
 import qpcr
-from copy import deepcopy
-from pathlib import Path
-import base64
+from qpcr.Pipes import BasicPlus
+import qpcr.Filters as Filters
+import qpcr.Plotters as Plotters
 
-from data_auxiliary import * 
-from data_analysis import *
+st.set_page_config(
+                        page_title="Qupid",
+                        page_icon="📈",
+                        layout="wide",
+                        initial_sidebar_state = "collapsed",
+                    )
 
-def main():
-    st.title("qPCR-Analyser")
-    st.markdown("""
-        ---
-        """)
-    # get the input data files
-    expander = st.expander("Upload your files here")
-    e_col1, e_col2 = expander.columns(2)
-    normaliser_file = e_col1.file_uploader("Select csv file for the normaliser", type=["csv"])
-    target_file = e_col2.file_uploader("Select csv file(s) for your target runs", type=["csv"], accept_multiple_files=True)
+st.title("Qupid")
+st.markdown("### A web-application to facilitate Delta-Delta-Ct analysis")
 
-    if target_file:
-        target = import_data(target_file)
-    if normaliser_file:
-        norm_backup = deepcopy(normaliser_file)
-        normaliser = import_data(normaliser_file)
+# setup layout
 
-    # setup the settings containers
-    container = st.container()
-    col1, col2 = container.columns(2)
+# =================================================================
+# upload input files for normalisers and assays
+# =================================================================
 
-    replicate_type = col1.selectbox("Select what type of replicates to use", ["equal replicates (n)", "specified (list)"])
+files_expander = st.expander("Input Data Files", expanded = True)
+assay_files_col, norm_files_col = files_expander.columns(2)
 
-    if replicate_type == "equal replicates (n)":
-        replicates = col1.number_input("Define the number of replicates",
-                            min_value = 1, step = 1)
-    elif replicate_type == "specified (list)":
-        replicates = col1.text_input("Provide a list of replicates (n) for each group")
-        replicates = replicates.split(",")
-        try: 
-            replicates = [int(i) for i in replicates]
-        except: pass
-        
-    anchor = col1.selectbox("Select what anchor to use", 
-                    ["grouped", "first", "specified"])
+assay_files = assay_files_col.file_uploader(
+                                            "Upload Input Assays", 
+                                            type = "csv",
+                                            accept_multiple_files = True,
+                                            help = "Upload csv files here for all assays that shall be treated as samples-of-interest.\nPlease, upload a separate file for each assay."
+                                        )
+
+norm_files = norm_files_col.file_uploader(
+                                            "Upload Normaliser Assays", 
+                                            type = "csv",
+                                            accept_multiple_files = True,
+                                            help = "Upload csv files here for all assays that shall be treated as normalisers.\nPlease, upload a separate file for each assay."
+                                        )
+
+# check if data is supplied
+got_data = assay_files is not None and norm_files is not None
+
+# =================================================================
+# Control settings for experiment
+# =================================================================
+
+controls_panel = st.container()
+controls, chart = controls_panel.columns((10,20))
+
+# setting up controls
+replicates = controls.number_input(
+                                    "Number of Replicates per group",
+                                    min_value = 1,
+                                    value = 3,
+                                    step = 1,
+                                    help = "The number of replicates in each group of replicates. Note, this assumes there are always the same number of replicates. If there are outliers in your data, please, keep these, to preserve dimensionality. Outliers will be filtered out by the app itself."
+                                )
+
+group_names = controls.text_input(
+                                    "Names of Replicate groups",
+                                    placeholder = "control, conditionA, conditionB",
+                                    help = "The names for your groups of replicates (optional). Please, specify names comma-separated."
+                                )
+# pre-process group_names into list or set to None
+group_names = None if group_names == "" else [i.strip() for i in group_names.split(",")]
+
+filter_type = controls.radio(
+                                "Select Filter", 
+                                ["Range", "IQR", "None"], 
+                                help = "Select which filter to apply before Delta-Delta-Ct computation. By default a Range Filter of +/- 1 around the group median is applied. Alternatively, an IQR filter of 1.5 x IQR around the median can be selected. If None is selected, no filtering will be done."
+                            )
+
+chart_mode = controls.radio(
+                                "Select Plotting Mode", 
+                                ["interactive", "static"], 
+                                help = "Select which type of plot to display. Either an interactive plot, or a static figure."
+
+                            )
+
+run_button = controls.button(
+                                "Run Analysis",
+                            )
+
+
+# =================================================================
+# Run our analysis
+# =================================================================
+
+
+if run_button and got_data:
     
-    if anchor == "specified":
-        new_anchor = col1.number_input("Specify the anchor value")
-        if new_anchor:
-            anchor = new_anchor
-    elif anchor == "grouped":
-        anchor = None
+    # setup pipeline
+    pipeline = BasicPlus()
+    pipeline.replicates(replicates)
+    pipeline.names(group_names)
 
-    groupnames = col1.text_input("Insert group names here (optional)")
-    groupnames = get_group_names(groupnames)
-
-    mode = col1.selectbox("Mode of analysis", ["replicate", "stats"])
-
-    use_combined_normalisers = col1.checkbox("Uses combined normalisers")
-
-    # setup the analysis controls in the second column 
-
-    col2.markdown("## Available Analysis")
-    col2.markdown("""
-        ---
-        """)
-
-    # single delta ct analysis – basically normalisation within one data-file
-    single_delta_ct = col2.button("Single Delta CT")
-    if single_delta_ct:
-        try: 
-            var = target
-        except: 
-            st.error("At least one target file is required!")
-        
-        analysis = ["Single Delta CT", "$\Delta$CT"] #just as a label for the plot later on...
-
-        if len(target) > 1:
-            st.error("Single Delta CT only works on one target file!")
-        else:
-            result = single_dCt(target[0], replicates, mode, anchor=anchor, group_names = groupnames, export=False)
-            result_filename = target_file[0].name
+    # setup filter
+    if filter_type != "None":
+        if filter_type == "Range":
+            _filter = Filters.RangeFilter()
+        elif filter_type == "IQR":
+            _filter = Filters.IQRFilter()
+        pipeline.add_filters(_filter)
     
-    # delta delta CT analysis 
-    delta_delta_ct = col2.button("Delta Delta CT")
-    if delta_delta_ct:
-        try: 
-            var = normaliser
-            var = target
-        except:
-            st.error("Make sure you have both one normaliser and at least one target file selected!")
+    # setup plotter
+    _plotter = Plotters.PreviewResults(chart_mode)
+    pipeline.add_plotters(_plotter)
 
-        analysis = ["Delta Delta CT", "$\Delta\Delta$CT"]
+    # link the data
+    pipeline.add_assays(assay_files)
+    pipeline.add_normalisers(norm_files)
 
-        data_files = []
-        for i in target:
-            data_files.append(deepcopy(i))
-        
-        # run names are automatically assigned from the file-names
-        run_names = generate_run_names(target_file, normaliser_file)
+    # run pipeline
+    pipeline.run()
 
-        # when using combined normalisers we need to specially import the file so as to avoid the pre-processing 
-        if use_combined_normalisers == True:
-            norm = read_data(norm_backup)
-            norm = norm.to_dict()
-            normaliser = norm
-        
-        result = delta_dCt(data_files, replicates, deepcopy(normaliser), run_names, group_names=groupnames, anchor=anchor, export=False, use_combined_normalisers=use_combined_normalisers)
-
-    # combine normalisers
-    combine_normaliser = col2.button("Combine Normalisers")
-    if combine_normaliser:
-        try: 
-            var = normaliser
-            var = target
-        except: 
-            st.error("Please, select one normaliser and at least one target which shall be combined with the normalisers")
-        
-        to_combine = [normaliser]
-        for i in target:
-            to_combine.append(i)
-        
-        run_names = generate_normaliser_combined_names(normaliser_file,target_file)
-
-        to_combine = preprocess_normalisers(to_combine, replicates, run_names, groupnames, anchor=anchor)
-        result = combine_normalisers(to_combine)
-        
-        analysis = ["combine", ""]
-
-    container2 = st.container()
-
-    try: 
-        
-        container2.markdown("""
-        ---
-        """)
-       
-        if analysis[0] == "Single Delta CT":
-            display_results_singleCT(container2, mode, analysis, result, result_filename)
-        elif analysis[0] == "Delta Delta CT":
-
-            prev_exp = container2.expander("Expand to view preview plots")
-            prev_fig = qA.preview_results(result, figsize=None)
-            prev_exp.pyplot(prev_fig)
-            agg_exp = container2.expander("Expand to view aggregate plot")
-            fig = qA.make_aggregate_plot(result)
-            agg_exp.pyplot(fig)
-            grp_exp = container2.expander("Expand to view grouped plots")
-            try: 
-                fig1 = qA.make_grouped_plots(result, subplots=True,first_only_delimiter="_rel_", match_first_only=True, cutoff=0.27)
-                grp_exp.pyplot(fig1)
-                link = generate_dict_download_link(result)
-                grp_exp.markdown("Not quite happy with this figure? \n {} and open them in [Figed](https://share.streamlit.io/noahhenrikkleinschmidt/figed-for-grouped_plots/main/main.py)  – our app to modify the grouped_plots figure.".format(link), unsafe_allow_html=True)
-            except: 
-                pass
-
-            print_figs = display_results_ddCT(container2, mode, analysis, result)            
-            zip_result = convert_to_stats(mode, result)
-            print_figs.append(fig)
-            print_figs.append(fig1)
-
-            zip_compiler(col1, zip_result, print_figs)
-
-        elif analysis[0] == "combine":
-            container.write(dict_to_frame(result), use_container_width=True)
-            download_link = generate_download_link(result, "-".join(run_names), analysis)
-            container.markdown(download_link, unsafe_allow_html=True)
-        
-    except Exception as e: pass #st.write(e)
-
-    col2.markdown("""
-    ---
-    """)
-    citation = """Kleinschmidt, N. (2021). qpcr-Analyser -- a web-based application to facilitate qPCR data analysis (Version 0.0.1) [Computer software]. https://github.com/NoahHenrikKleinschmidt/qpcr-Analyser.git"""
-    col2.markdown("""
-    When using this app to analyse your data, please cite: \n\n {}
-    """.format(citation))
-    
-
-def convert_to_stats(mode, result):
-    if mode == "stats":
-        zip_result = {}
-        for i in result:
-            tmp = {i : qpcr.get_stats(result[i])}
-            zip_result.update(tmp)
-    else:
-        zip_result = result
-    return zip_result
-
-def display_results_singleCT(container, mode, analysis, result, result_filename):
-    if result:
-        barplot = barchart(result, mode, analysis, result_filename)
-        container.plotly_chart(barplot, use_container_width=True)
-        container.write(dict_to_frame(result), use_container_width=True)
-        download_link = generate_download_link(result, result_filename, analysis)
-        container.markdown(download_link, unsafe_allow_html=True)
-
-def display_results_ddCT(container, mode, analysis, result):
-    if result:
-        print_figs = []
-        for d in result:
-            fig = barchart(result[d], mode, analysis, d)
-            container.plotly_chart(fig, use_container_width=True)
-            f1 = print_chart(result[d], mode, analysis, d)
-            print_figs.append(f1)
-    return print_figs
-
-
-
-# generate a zip download link for results << this one WORKS :-)
-
-def zip_compiler(container, result, print_figs):
-    container.markdown(" --- \nYour results have been compiled into a ZIP file:")
-    now_string = datetime.now()
-    now_string = now_string.strftime("%d%m%Y_%H%M%S")
-    filename = "results_{}.zip".format(now_string)
-    directory = "/tmp/{}".format(filename)
-
-    # generate a tmp zipfile 
-    with zipfile.ZipFile(directory, mode="w") as zf:
-        # store figures
-        for f in print_figs:
-            name = "{}.jpg".format(f.axes[0].get_title())
-            buf = io.BytesIO()
-            f.savefig(buf, dpi=150)
-            plt.close()
-            zf.writestr(name, data=buf.getvalue())
-
-        # store the dict entries as csv files
-        for d in result:
-            buf = io.StringIO()
-            csv = result[d]
-            csv = pd.DataFrame(csv)
-            csv = csv.to_csv(buf)
-            name = "{}.csv".format(d)
-            zf.writestr(name, data=buf.getvalue())
-
-    # generate a download link for the tmp zipfile 
-    with open(directory, "rb") as zf:
-        b64 = base64.b64encode(zf.read()).decode()
-        href = f'<a href="data:file/zip;base64,{b64}" download=\'{filename}\'>\
-            Download results as zip \
-        </a>'
-        container.markdown(href, unsafe_allow_html=True)
-        
-
-if __name__=="__main__":
-    main()
+    # get results
+    results = pipeline.get()
+    chart.write(results)

@@ -65,25 +65,6 @@ group_names = controls.text_input(
 # pre-process group_names into list or set to None
 group_names = None if group_names == "" else [i.strip() for i in group_names.split(",")]
 
-# ----------------------------------------------------------------
-# Advances settings like Anchor...
-# ----------------------------------------------------------------
-
-more_controls_expander = controls.expander("Advanced Settings")
-
-anchor = more_controls_expander.selectbox(
-                                            "Select anchor", 
-                                            ["first", "grouped", "specified"],
-                                            help = "The anchor is the intra-dataset reference for the first Delta-Ct. Using 'first' will choose the very first data entry, 'grouped' will use the first entry of each replicate group. Using 'specified' you may pass an externally computed numeric value."
-                                            
-                                        )
-
-# preprocess anchor input (and allow specific entry)
-if anchor == "specified":
-    new_anchor = more_controls_expander.number_input("Specify an anchor value")
-    anchor = new_anchor
-
-
 
 # ----------------------------------------------------------------
 # Generic settings like Filter type and Plotter...
@@ -105,14 +86,48 @@ chart_mode = controls.radio(
 
                             )
 
-run_button = controls.button(
-                                "Run Analysis",
-                            )
+
+# ----------------------------------------------------------------
+# Advances settings like Anchor...
+# ----------------------------------------------------------------
+
+more_controls_expander = controls.expander("Advanced Settings")
+
+# anchor settings
+anchor = more_controls_expander.selectbox(
+                                            "Select anchor", 
+                                            ["first", "grouped", "specified"],
+                                            help = "The anchor is the intra-dataset reference for the first Delta-Ct. Using 'first' will choose the very first data entry, 'grouped' will use the first entry of each replicate group. Using 'specified' you may pass an externally computed numeric value."
+                                            
+                                        )
+
+# preprocess anchor input (and allow specific entry)
+if anchor == "specified":
+    new_anchor = more_controls_expander.number_input("Specify an anchor value")
+    anchor = new_anchor
+
+# filtering inclusion range
+preset_range = (-1.0, 1.0) if filter_type == "Range" else (-1.5, 1.5)
+inclusion_range = more_controls_expander.slider(
+                                                "Filter Inclusion Range",
+                                                min_value = -10.0, 
+                                                max_value = 10.0, 
+                                                value = preset_range,
+                                                step = 0.1,
+                                                help = "Set the upper and lower boundries for the filter inclusion range. In case of RangeFilter this will be absolute numbers around the group median. In case of IQRFilter this will be factors n x IQR around the group median."
+                                            )
+# ...     'Select a range of values',
+# ...     0.0, 100.0, (25.0, 75.0))
+
 
 
 # =================================================================
 # Run our analysis
 # =================================================================
+
+run_button = controls.button(
+                                "Run Analysis",
+                            )
 
 def add_figure(fig, container, mode):
     """

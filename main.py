@@ -26,14 +26,14 @@ assay_files_col, norm_files_col = files_expander.columns(2)
 
 assay_files = assay_files_col.file_uploader(
                                             "Upload Input Assays", 
-                                            type = "csv",
+                                            type = ["csv", "xlsx"],
                                             accept_multiple_files = True,
                                             help = "Upload csv files here for all assays that shall be treated as samples-of-interest.\nPlease, upload a separate file for each assay."
                                         )
 
 norm_files = norm_files_col.file_uploader(
                                             "Upload Normaliser Assays", 
-                                            type = "csv",
+                                            type = ["csv", "xlsx"],
                                             accept_multiple_files = True,
                                             help = "Upload csv files here for all assays that shall be treated as normalisers.\nPlease, upload a separate file for each assay."
                                         )

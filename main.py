@@ -13,7 +13,7 @@ st.set_page_config(
                     )
 
 st.title("Qupid")
-st.markdown("### A web-application to facilitate Delta-Delta-Ct analysis")
+st.markdown("#### Quantitative PCR Interface to Delta-Delta-Ct")
 
 # setup layout
 

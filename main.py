@@ -54,7 +54,7 @@ replicates = controls.number_input(
                                     min_value = 1,
                                     value = 3,
                                     step = 1,
-                                    help = "The number of replicates in each group of replicates. Note, this assumes there are always the same number of replicates. If there are outliers in your data, please, keep these, to preserve dimensionality. Outliers will be filtered out by the app itself."
+                                    help = "The number of replicates in each group of replicates. Note, this assumes there are always the same number of replicates. If this is not the case for your datasets then use the replicate settings from the `Advanced Settings`."
                                 )
 
 group_names = controls.text_input(
@@ -105,6 +105,28 @@ anchor = more_controls_expander.selectbox(
 if anchor == "specified":
     new_anchor = more_controls_expander.number_input("Specify an anchor value")
     anchor = new_anchor
+
+# advanced replicate settings
+advanced_replicates = more_controls_expander.selectbox(
+                                                        "Advanced replicates", 
+                                                        ["simple", "tuple", "formula"],
+                                                        help = "Set the number of replicates of your replicate groups. If all groups have the same number of replicates (e.g. all are triplicates) you may use the default settings `simple` which can be specified using the number input above. If replicate groups are unequal in size, you can either specify a `tuple` of sizes for each group individually (for instance `3,3,3,3,1` for four triplicates and one unicate), or use a text `formula` to specify a recipe for such a tuple (in the example before `'3:4,1'` would specify the recipe for `3,3,3,3,1`). Generally, a `formula` works by `n:m` where `n` is the number of replicates in a group and `m` is the number of times to repeat this pattern. Check out the [qpcr documentation](https://noahhenrikkleinschmidt.github.io/qpcr/index.html#qpcr.Assay.replicates) for more information."
+                                                    )
+# by default we use the simple number input above,
+# if something different is selected, then we add another input widget
+if advanced_replicates != "simple":
+    placeholder = "3,3,3,1" if advanced_replicates == "tuple" else "3:3,1"
+    replicates = more_controls_expander.text_input(
+                                                    "Number of Replicates per group",
+                                                    placeholder = placeholder,
+                                                    help = "The number of replicates per group. Specify here either a `tuple` of individual values or a `formula`. See the help string of the `Advanced replicates` selectbox above for more details."
+                                                )
+
+    # if a tuple is provided, we'll pre-process the string to get the numeric tuple values
+    # if a formula is used we can keep the string formula and don't have to pre-process that any further...
+    if advanced_replicates == "tuple" and replicates != "":
+        replicates = tuple([int(i.strip()) for i in replicates.split(",")])
+
 
 # filtering inclusion range
 if filter_type is not None:

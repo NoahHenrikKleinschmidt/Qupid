@@ -6,11 +6,23 @@ on the different user inputs etc. ...
 import streamlit as st
 import qpcr
 import Qupid as qu
+from copy import deepcopy 
+from datetime import datetime
 
+def add_figure(fig, container, mode):
+    """
+    Adds a figure to a container
+    """
+    if mode == "interactive":
+        container.plotly_chart(fig, use_container_width = True)
+    elif mode == "static":
+        container.pyplot(fig, use_container_width = True)
+       
 
 def session(key, value = None, reset = False):
     """
-    Adds a variable to the st.session state or gets it
+    Adds a variable to the st.session_state or gets it.
+    It returns None by default if the variable is not in session_state.
     """
     if value is not None :
         st.session_state[key] = value
@@ -306,7 +318,6 @@ def setup_Assay_datacols(container):
                                     help = "Enter the name of the column in which assay identifiers are stored",
                                     value = "Assay",
                                 )
-
     session("assay_col", assay_col)
 
 
@@ -389,6 +400,210 @@ def setup_bigtable_file(container, build = False):
                         # save to session
                         session("sheet_name", sheet_name)
 
+
+
+
+def setup_filter_type(container):
+    """
+    Sets up a radio button to select which filter to use
+    """
+    options = ["Range", "IQR", "None"]
+    filter_type = container.radio(
+                                    "Select Filter", 
+                                    options = options, 
+                                    help = "Select which filter to apply before Delta-Delta-Ct computation. By default a Range Filter of +/- 1 around the group median is applied. Alternatively, an IQR filter of 1.5 x IQR around the median can be selected. If None is selected, no filtering will be done."
+                                )
+    # pre-process filter_type
+    filter_type = None if filter_type == "None" else filter_type
+    session("filter_type", filter_type, reset = True)
+
+def setup_chart_mode(container):
+    """
+    Sets up a radio button to select interactive or static figure mode
+    """
+    options = ["interactive", "static"]
+    chart_mode = container.radio(
+                                "Select Plotting Mode", 
+                                options = options, 
+                                help = "Select which type of plot to display. Either an interactive plot, or a static figure."
+
+                            )
+    session("chart_mode", chart_mode)
+
+
+
+def setup_anchor_settings(container):
+    """
+    Sets up a selectbox (and optional number input for "specified" anchor )
+    """
+    # anchor settings
+    options = ["first", "mean", "grouped", "specified"]
+    anchor = container.selectbox(
+                                    "Select anchor", 
+                                    options = options,
+                                    help = "The anchor is the intra-dataset reference for the first Delta-Ct. Using 'first' will choose the very first data entry, 'grouped' will use the first entry of each replicate group. Using 'specified' you may pass an externally computed numeric value."  
+                            )
+
+    # preprocess anchor input (and allow specific entry)
+    if anchor == "specified":
+        new_anchor = container.number_input("Specify an anchor value")
+        anchor = new_anchor
+
+    # set up ref_group in case of "mean" anchor 
+    session("ref_group", reset = True)
+    if anchor == "mean":
+        # get the first assay to get the group names
+        groups = session("assays")[0].names()
+        ref_group = container.selectbox(
+                                            "Select a reference group",
+                                            help = "Select which of your replicate groups is your reference.",
+                                            options = groups,
+                                    )
+        session("ref_group", ref_group)
+
+    # save to session
+    session("anchor", anchor)
+
+
+
+def setup_filter_inclusion_range(container):
+    """
+    Sets up a slider for the inclusion range of the filter
+    """
+    filter_type = session("filter_type")
+    # filtering inclusion range
+    if filter_type is not None:
+        preset_range = (-1.0, 1.0) if filter_type == "Range" else (-1.5, 1.5)
+        inclusion_range = container.slider(
+                                                        "Filter Inclusion Range",
+                                                        min_value = -5.0, 
+                                                        max_value = 5.0, 
+                                                        value = preset_range,
+                                                        step = 0.1,
+                                                        help = "Set the upper and lower boundries for the filter inclusion range. In case of RangeFilter this will be absolute numbers around the group median. In case of IQRFilter this will be factors n x IQR around the group median."
+                                                    )
+        session("inclusion_range", inclusion_range)
+
+
+def setup_plotting_kwargs(container):
+    """
+    Sets up a text area for plotting kwargs
+    """
+    # plotting kwargs setup
+    plotting_kwargs = container.text_area(
+                                            "Plotting parameters",
+                                            placeholder = """color = 'green'\ntitle = 'my figure'\nfigsize = (8, 3)""",
+                                            help = "You can specify various plotting arguments (or in short: plotting `kwargs` for 'keyword arguments')to fine-tune the preview figures generated. Note, that this requires some knowledge of either matplotlib's or plotly's accepted arguments for figures and subplots, because the different plotting methods accept different kinds of plotting kwargs. You can [learn more in the documentation](https://noahhenrikkleinschmidt.github.io/qpcr/Plotters/Plotters.html) of the `qpcr` module."   
+                                        )
+    # pre-process kwargs into a dict
+    # crop any user-placed commas
+    plotting_kwargs = [ 
+                            i[:-1] if i.endswith(",") 
+                            else i 
+                            for i in plotting_kwargs.split("\n") 
+                    ]
+    # remove any empty lines the user may have entered
+    plotting_kwargs = [  i for i in plotting_kwargs if i != ""  ]
+    # check if there are any non-standard formatted lines
+    if any(  [  "=" not in i for i in plotting_kwargs  ]   ):
+        st.error("Something is off with the plotting kwargs, check again to make sure all your lines conform to `var = value` formatting.")
+        st.stop()
+    # link lines again by commas
+    plotting_kwargs = ",".join(plotting_kwargs)
+
+    # convert to a dict
+    # maybe use something less hacky than eval() 
+    # at some point, but so far it works...
+    plotting_kwargs = f"dict({plotting_kwargs})"
+    plotting_kwargs = eval(plotting_kwargs)
+    # save to session
+    session("plotting_kwargs", plotting_kwargs)
+
+def setup_drop_groups_selection(container):
+    """
+    Sets up a selectbox to choose which groups to ignore while plotting
+    It also offers a checkbox to invert the selection to allow instead to
+    highlight only the groups that should be plotted...
+    """
+    groups = session("assays")[0].names()
+
+    to_ignore = container.multiselect(
+                                        "Select groups to ignore while plotting",
+                                        help = "Select groups of replicates that should not be included in your Preview figure. This is useful when having Diluent or RT- samples that you would not want to have in your final figure.",
+                                        options = groups
+                                    )
+
+    invert_selection = container.checkbox(
+                                                "Invert selection",
+                                                help = "Use this to invert your selection. In this case only the selected groups will be plotted."
+                                        )
+    if invert_selection:
+        to_ignore = [ i for i in groups if i not in to_ignore ]
+    session("ignore_groups",to_ignore)
+
+
+def setup_drop_rel(container):
+    """
+    Sets up a checkbox to drop the _rel_{} part of the headers
+    for plotting
+    """
+    drop_rel = container.checkbox(
+                                    "Drop '_rel_'",
+                                    help = "This will drop the `_rel_{normaliser}` part of the composite `{assay}_rel_{normaliser}` ids, and thus restore the original assay id when plotting."
+                                )
+    session("drop_rel", drop_rel)
+
+
+
+def setup_session_log_download(container):
+    """
+    Generates a session log dictionary download button
+    """
+    session_log = make_session_log()
+    # session_log = [(i, j) for i, j in session_log.items()]
+    string = "\t{} : {},\n"
+
+    session_log = [ string.format(i, j) for i, j in session_log.items()]
+    session_log = "{\n" + "".join(session_log) + "}"
+    now = datetime.now()
+    filename = f"Qupid_session_log_{now}.json"
+    container.download_button(
+                                "Download Session Log",
+                                session_log,
+                                file_name = filename,
+                                mime = "text/plain",
+                                help = "Downloads a `json` file of metadata on the settings on which Qupid was run. This is important to ensure reproducibility of your analyses, so always download this file!"
+                            )
+
+
+
+
+def setup_results_downloads(container):
+    """
+    Sets up two download buttons, one for the results with replicates, 
+    one for the summary statistics table.
+    """
+    rep_results = session("results_df")
+    stats_results = session("results_stats")
+    
+    container.download_button(
+                            "Download Results",
+                            rep_results.to_csv(index = False),
+                            mime = "text/csv",
+                            help = "Download the analysed results retaining all individual replicate values."
+                        )
+
+    container.download_button(
+                            "Download Summarized Results",
+                            stats_results.to_csv(index = False),
+                            mime = "text/csv",
+                            help = "Download the analysed results summarized to mean and stdev of each replicate group."
+                        )
+
+
+
+
+
 def found_assays_message():
     """
     Generates a success message with the ids of all assays and Normalisers
@@ -411,3 +626,55 @@ def found_assays_message():
                         normalisers = [ i.id() for i in session("normalisers") ],
                     )
                 )
+
+
+def make_session_log():
+    """
+    Will remove technical stuff that is not user-relevant from the st.session_state
+    
+    Returns
+    ---
+    log : dict
+        The processed session log 
+    """
+    # get the session_state
+    # we manually copy as deepcopy did not work for the session_state
+    # and so processing also affected the original dict...
+    log = {i : j for i,j in st.session_state.items() }
+
+    # specify the keys to remove
+    to_remove = []
+
+    if "ControlsReader" in log.keys():
+        to_remove.append( "ControlsReader" )
+
+    # remove results (they are not meta-data)
+    if "results" in log.keys():
+        to_remove.append( "results" )
+    if "results_df" in log.keys():
+        to_remove.append( "results_df" )
+    if "results_stats" in log.keys():
+        to_remove.append(  "results_stats"  )
+
+    if "figures" in log.keys():
+        to_remove.append(  "figures"  )
+
+    # if we got a filter remove the Filtering meta data
+    if "Filter" in log.keys():
+        to_remove.append( "Filter" )
+    if session("filter_type") is None and session("Filter") is not None:
+        if "inclusion_range" in log.keys():
+            to_remove.append(  "inclusion_range"  )
+
+    # remove the keys 
+    for i in to_remove: 
+        log.pop(i)
+
+    # rename the ignore groups to avoid confusion
+    if "ignore_groups" in log.keys():
+        log["ignore_groups_while_plotting"] = log["ignore_groups"]
+        log.pop("ignore_groups")
+
+    return log
+
+

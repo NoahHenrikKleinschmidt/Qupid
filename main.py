@@ -163,8 +163,9 @@ if session("assays") is not None and session("normalisers") is not None:
     ctrl.setup_anchor_settings(more_controls_expander)
 
     # filtering inclusion range
-    more_controls_expander.markdown(    "###### Filter Settings"    )
-    ctrl.setup_filter_inclusion_range(more_controls_expander)
+    if session("filter_type") is not None:
+        more_controls_expander.markdown(    "###### Filter Settings"    )
+        ctrl.setup_filter_inclusion_range(more_controls_expander)
 
     # plotting kwargs setup
     more_controls_expander.markdown(    "###### Plotter Settings"    )

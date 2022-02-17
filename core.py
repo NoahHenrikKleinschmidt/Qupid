@@ -7,9 +7,9 @@ import streamlit as st
 import qpcr
 import controls as ctrl
 from controls import session
-import Qupid as qu
+import qpcr._AddOns.Qupid as qu
 from copy import deepcopy 
-
+import datetime
 
 def read():
     """
@@ -135,7 +135,7 @@ def read():
             # pass on replicate information
             qu.replicates_from_session(reader)
 
-            assays, normalisers = Qreader.prase_csv_BigTable(reader, is_horizontal)
+            assays, normalisers = Qreader.parse_csv_BigTable(reader, is_horizontal)
 
     # store in session
     session("assays", assays)

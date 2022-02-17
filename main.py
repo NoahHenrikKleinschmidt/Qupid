@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import qpcr
-import Qupid as qu
+import qpcr._AddOns.Qupid as qu
 import controls as ctrl
 from controls import session
 import qpcr.Filters as Filters
@@ -220,12 +220,13 @@ if session("assays") is not None and session("normalisers") is not None:
         core.make_preview(chart_col)
 
 
-    # make the session log download button
+    # make some download buttons and stuff..
     if analysis_was_run: 
         core.stats_results_table(chart_col)
         ctrl.setup_results_downloads(chart_col)
+        ctrl.onefile_download_all_assays(chart_col)
         ctrl.setup_session_log_download(chart_col)
-    
+
 # =================================================================
 # Footer Section
 # =================================================================

@@ -5,7 +5,7 @@ on the different user inputs etc. ...
 
 import streamlit as st
 import qpcr
-import Qupid as qu
+import qpcr._AddOns.Qupid as qu
 from copy import deepcopy 
 from datetime import datetime
 
@@ -585,23 +585,74 @@ def setup_results_downloads(container):
     """
     rep_results = session("results_df")
     stats_results = session("results_stats")
-    
+
     container.download_button(
                             "Download Results",
                             rep_results.to_csv(index = False),
                             mime = "text/csv",
-                            help = "Download the analysed results retaining all individual replicate values."
+                            help = "Download the final Delta-Delta-Ct results retaining all individual replicate values."
                         )
 
     container.download_button(
                             "Download Summarized Results",
                             stats_results.to_csv(index = False),
                             mime = "text/csv",
-                            help = "Download the analysed results summarized to mean and stdev of each replicate group."
+                            help = "Download the final Delta-Delta-Ct results results summarized to mean and stdev of each replicate group."
                         )
 
+def onefile_download_all_assays(container):
+    """
+    Merges all assays into a single (irregular csv) 
+    file with all groups, Ct, dCt values etc.
+    """
+
+    assays = session("assays")
+    normalisers = session("normalisers")
 
 
+    # assemble a total string of the file
+    total_file = ""
+    header = f"Qupid Analysed Assays\nDate,{datetime.today().strftime('%Y-%m-%d')}\nTime,{datetime.now().strftime('%H:%M:%S')}\n"
+    
+    # add input data file names
+    if session("upload_type") == "multiple files":
+        input_files = [ i.name for i in session("assay_files") ] + [ i.name for i in session("normaliser_files") ] 
+        input_files = "\n".join(input_files)
+    else:
+        input_files = session("assay_files").name
+    
+    input_files = f"\nInput Datafile(s):\n{input_files}\n\n"
+    header += input_files
+    total_file += header
+
+    # now add assays and normaliser files (we'll also add the appropriate decorators)
+    new_entry = "{decorator}\n{assay}\n{df}\n\n"
+
+    decorator = qpcr.Parsers.plain_decorators["qpcr:assay"]
+    for assay in assays:
+
+        df = assay.get()
+        df = df.to_csv(index = False)
+        id = assay.id()
+
+        total_file += new_entry.format(decorator = decorator, assay = id, df = df)
+
+    decorator = qpcr.Parsers.plain_decorators["qpcr:normaliser"]
+    for assay in normalisers:
+
+        df = assay.get()
+        df = df.to_csv(index = False)
+        id = assay.id()
+
+        total_file += new_entry.format(decorator = decorator, assay = id, df = df)
+
+    # generate a download button
+    container.download_button( 
+                                "Download all Assays", 
+                                total_file, 
+                                file_name = "all_assays.csv",
+                                help = "Merges all datasets into a single irregular multi-assay `csv` file. This will also include the raw Ct values, delta-Ct values, all Delta-Delta-Ct values etc. from all assays, as well as normalisers."
+                            )
 
 
 def found_assays_message():

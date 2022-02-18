@@ -202,7 +202,7 @@ def setup_multi_assay_file(container, build = False):
         patterns.append("other")
         assay_pattern = container.selectbox(
                                                     "Select an assay pattern",
-                                                    help = "Select a pattern (or define one yourself) by which the names of the assays names should be extracted.",
+                                                    help = "Select a pattern (or define one yourself) by which the names of the assays names should be extracted. Is your pattern not defined yet? Then, please, post an [issue on Github](https://github.com/NoahHenrikKleinschmidt/qpcr/issues) an provide some examples of how your assays usually appear!",
                                                     options = patterns
                                             )
         if assay_pattern == "other":
@@ -653,6 +653,42 @@ def onefile_download_all_assays(container):
                                 file_name = "all_assays.csv",
                                 help = "Merges all datasets into a single irregular multi-assay `csv` file. This will also include the raw Ct values, delta-Ct values, all Delta-Delta-Ct values etc. from all assays, as well as normalisers."
                             )
+
+
+def vet_all_assays_grouped():
+    """
+    Checks if all assays could be grouped using the specified parameters, 
+    and raises errors if not.
+    """
+    assays = session("assays") + session("normalisers")
+
+    no_groups = [ i for i in assays if i.groups() is None ]
+    no_groups_names = [  i.id() for i in no_groups  ]
+    if len(no_groups) > 0:
+        
+        # assemble an error message
+        error_string = f"The following assays/normalisers could not be grouped using the specified parameters!\n\n ##### {no_groups_names} \n\n"
+        if session("replicates") is None: 
+            perhaps_why = "This could be because the replicates were not automatically inferrable on these datasets. Try manually specifying `replicates`."
+        else: 
+            perhaps_why = f"This could be because the specified replicates `{session('replicates')}` do not cover all the entries!"
+
+        # write error
+        error_string += perhaps_why
+        st.error(error_string)
+
+
+        # check for the assay lengths ( add info 
+        # if at least one is of different length )  
+        groups = [ i for i in assays if i.groups() is not None ]
+        length_good = groups[0].n()
+        same_length = all(  [ i.n() == length_good for i in no_groups ]   )
+        if not same_length:
+            st.error("At least one of the above assays does not have the same number of replicate entries as the others! Make sure that all assays have the same length (add dummy groups if necessary). Or, manually adjust replicate identifiers to allow automatic inference of replicates.")
+        
+        # stop here
+        st.stop()
+
 
 
 def found_assays_message():

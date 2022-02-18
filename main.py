@@ -16,9 +16,12 @@ st.set_page_config(
                         initial_sidebar_state = "collapsed",
                     )
 
-st.title("Qupid")
-st.markdown("#### Quantitative PCR Interface to Delta-Delta-Ct")
+color = "rgb(255, 82, 88)"
+
+st.markdown("""# Qupid""")
+st.markdown(f"""###  <font style="color:{color}">Qu</font>antitative <font style="color:{color}">P</font>CR <font style="color:{color}">I</font>nterface to <font style="color:{color}">D</font>elta-Delta-Ct""", unsafe_allow_html=True)
 st.markdown("---")
+
 # =================================================================
 # upload input files for normalisers and assays
 # =================================================================
@@ -119,11 +122,14 @@ if read_button:
     # read the data and store to session
     core.read()
 
+    # st.write(session("assays")[0].get())
+
 # =================================================================
 # Control settings for experiment
 # =================================================================
 
 if session("assays") is not None and session("normalisers") is not None:
+    ctrl.vet_all_assays_grouped()
     ctrl.found_assays_message()
 
     # also store the names of the assays and normalisers to the session state for log

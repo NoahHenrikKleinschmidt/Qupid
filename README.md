@@ -1,4 +1,4 @@
-# <img src="./tiny.svg" width="31"> Qupid
+# <img src="./.resources/tiny.svg" width="31"> Qupid
 
 ##  <font style="color:rgb(255, 82, 88)">Qu</font>antitative <font style="color:rgb(255, 82, 88)">P</font>CR <font style="color:rgb(255, 82, 88)">I</font>nterface to <font style="color:rgb(255, 82, 88)">D</font>elta-Delta-Ct
 
@@ -35,7 +35,7 @@ By the way, Qupid stores the settings it uses for its main computation and plott
 >
 > Well, the data was stored in separate files which made reading super easy and we used default settings for the main computation. 
 >
-> However, the figure below was generated from an analysis of just one single excel file containing data of six assays (two of them normalisers), and using some custom settings for the Delta-Ct value computation, plus a little figure adjustment. File preparation took around 25 seconds, Qupid setup took some 52 seconds. In total, `77` seconds (the main computation actually took `0.1048` seconds to finish). 
+> However, the figure below was generated from an analysis of just one single excel file containing data of six assays (two of them normalisers), and using some custom settings for the Delta-Ct value computation, plus a little figure adjustment. File preparation took around 25 seconds, Qupid setup took some 52 seconds. In total, `77` seconds from start to finish, results exportable in different formats for further analysis or visualisation. 
 >
 > ![](./.resources/example2.png)
 >

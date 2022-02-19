@@ -40,3 +40,9 @@ By the way, Qupid stores the settings it uses for its main computation and plott
 > ![](./.resources/example2.png)
 >
 > At this point it should be mentioned that these figures are actually pretty customisable. So even though they are intended just as "previews" they aim to be perfectly "lab-journal worthy".
+
+
+
+#### Citation 
+
+Kleinschmidt, N. (2022). Qupid - Quantitative PCR Interface to Delta-Delta-Ct, a web-application for swift Delta-Delta-Ct analysis of qPCR data. (Version 1.0.0) [Computer software]. https://github.com/NoahHenrikKleinschmidt/Qupid.git

@@ -256,7 +256,7 @@ If you wish to automate your qPCR data analysis even more or Qupid isn't quite s
 
 foot_middle.markdown("""
 Love using Qupid :cupid:?\n 
-Then, consider citing it in your work :hibiscus:. Find the citation [here](https://github.com/NoahHenrikKleinschmidt/qpcr-Analyser/blob/main/CITATION.cff). \n
+Then, cite it in your work :hibiscus:. Find the citation [here](https://github.com/NoahHenrikKleinschmidt/qpcr-Analyser/blob/main/CITATION.cff). \n
 Good luck with your research :four_leaf_clover:
 
 """)

@@ -2,6 +2,7 @@
 
 ##  <font style="color:rgb(255, 82, 88)">Qu</font>antitative <font style="color:rgb(255, 82, 88)">P</font>CR <font style="color:rgb(255, 82, 88)">I</font>nterface to <font style="color:rgb(255, 82, 88)">D</font>elta-Delta-Ct
 
+[![Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/noahhenrikkleinschmidt/qupid/main/src/main.py)
 
 This is `Qupid` the stand-alone web application for easy and fast Delta-Delta-Ct analysis of qPCR data provided by the  <a href = "https://github.com/NoahHenrikKleinschmidt/qpcr.git">qpcr python module</a>. 
 

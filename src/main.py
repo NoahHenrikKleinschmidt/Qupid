@@ -70,7 +70,7 @@ read_button = control_col.button(
 # control_col.markdown(   "Please, note that is is not possible to mix data from different upload types! You can perform an analysis on data uploaded by only a single input type at a time. ")
 control_col.markdown(   "If you wish to switch between input types, you may have to click the corresponding button twice or reload the app."   )
 control_col.markdown(   "Check out [the Getting Started tutorial](https://github.com/NoahHenrikKleinschmidt/qpcr/blob/main/Examples/0_getting_started.ipynb) to the API  to learn more about valid input datafiles. Also check out the [Decorator Tutorial](https://github.com/NoahHenrikKleinschmidt/qpcr/blob/main/Examples/8_decorating_datafiles.ipynb) to learn how to add decorators to your multi-assay datafiles."    )
-
+control_col.markdown(   "----- \n Need an introduction? Then check out the [Tutorial Notebook](https://github.com/NoahHenrikKleinschmidt/Qupid/blob/main/Tutorial.ipynb) that provides an overview of the interface.")
 
 # ------------------------------------------------------------------------------------------
 # Setting up input widgets for different datafile types

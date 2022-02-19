@@ -5,7 +5,7 @@ on the different user inputs etc. ...
 
 import streamlit as st
 import qpcr
-import Qupid2 as qu
+import Qupid as qu
 
 from copy import deepcopy 
 from datetime import datetime

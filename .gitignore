@@ -2,4 +2,4 @@
 __*
 *.csv
 *.zip
-Qupid*.py
+.DS_Store

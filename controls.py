@@ -5,8 +5,8 @@ on the different user inputs etc. ...
 
 import streamlit as st
 import qpcr
-# import qpcr._AddOns.Qupid as qu
-import Qupid2 as qu
+import qpcr._AddOns.Qupid as qu
+# import Qupid2 as qu
 
 from copy import deepcopy 
 from datetime import datetime

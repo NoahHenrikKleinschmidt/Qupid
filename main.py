@@ -1,8 +1,8 @@
 import streamlit as st
 import pandas as pd
 import qpcr
-# import qpcr._AddOns.Qupid as qu
-import Qupid2 as qu
+import qpcr._AddOns.Qupid as qu
+# import Qupid2 as qu
 
 import controls as ctrl
 from controls import session

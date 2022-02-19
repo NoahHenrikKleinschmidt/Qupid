@@ -9,8 +9,8 @@ import qpcr._auxiliary as aux
 import qpcr._auxiliary.defaults as defaults
 import controls as ctrl
 from controls import session
-# import qpcr._AddOns.Qupid as qu
-import Qupid2 as qu
+import qpcr._AddOns.Qupid as qu
+# import Qupid2 as qu
 
 from copy import deepcopy 
 import datetime

@@ -1,2 +1,5 @@
 .DS*
 __*
+*.csv
+*.zip
+.DS_Store

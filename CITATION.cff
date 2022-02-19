@@ -9,7 +9,7 @@ cff-version: "1.1.0"
 date-released: 2022-02-07
 license: "GPL-3.0"
 message: "When using this package to analyse your data, please, cite accordingly. Good luck with your research!"
-repository-code: "https://github.com/NoahHenrikKleinschmidt/qpcr-Analyser.git"
-title: "Qupid - Quantitative PCR Interface to Delta-Delta-Ct, a web-application for swift qPCR analysis."
-version: "0.0.2"
+repository-code: "https://github.com/NoahHenrikKleinschmidt/Qupid.git"
+title: "Qupid - Quantitative PCR Interface to Delta-Delta-Ct, a web-application for swift Delta-Delta-Ct analysis of qPCR data."
+version: "1.0.0"
 ...

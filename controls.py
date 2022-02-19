@@ -5,7 +5,9 @@ on the different user inputs etc. ...
 
 import streamlit as st
 import qpcr
-import qpcr._AddOns.Qupid as qu
+# import qpcr._AddOns.Qupid as qu
+import Qupid2 as qu
+
 from copy import deepcopy 
 from datetime import datetime
 
@@ -73,18 +75,24 @@ def vet_input_data():
 def upload_multiple_files(container, build = False):
     """
     Sets up two uploaders for assays and normalisers separately...
+    Note
+    ----
+    These have to be **regular** input files! 
     """
     if build:
+        
+        container.info(   "Note, all input files have to be structured identically!"   )
+
         assay_files = container.file_uploader(
                                                     "Upload Input Assays", 
-                                                    type = ["csv"],
+                                                    type = ["csv", "xlsx"],
                                                     accept_multiple_files = True,
                                                     help = "Upload csv files here for all assays that shall be treated as samples-of-interest.\nPlease, upload a separate file for each assay."
                                                 )
 
         norm_files = container.file_uploader(
                                                     "Upload Normaliser Assays", 
-                                                    type = ["csv"],
+                                                    type = ["csv", "xlsx"],
                                                     accept_multiple_files = True,
                                                     help = "Upload csv files here for all assays that shall be treated as normalisers.\nPlease, upload a separate file for each assay."
                                                 )
@@ -94,11 +102,29 @@ def upload_multiple_files(container, build = False):
         if norm_files != []:
             session("normaliser_files", norm_files)
 
-        # set up a delimiter to read the csv files
-        setup_csv_delimiter(container) 
 
         # set up replicate Settings
         setup_replicates_and_names(container)
+        
+        if assay_files != []: 
+            # link the datafiles to the reader for pre-processing
+            first_assay = assay_files[0]
+            reader.link(first_assay)
+
+            if reader.is_csv():
+                container.markdown(   "##### Csv Delimiter"   )
+                # set up a delimiter to read the csv files
+                setup_csv_delimiter(container) 
+                reader.read_csv()
+            else:
+                reader.read_excel()
+
+            ncols = reader.ncols()
+            if ncols > 2:
+                container.markdown(   "##### Data Columns"   )
+                container.markdown("Qupid has identified multiple data columns within your file. Specify which columns store the replicate identifiers and Ct values.")
+                # set up data column labels
+                setup_Id_Ct_datacols(container)
 
 def setup_replicates_and_names(container, allow_infer = True):
     """
@@ -170,7 +196,7 @@ def upload_single_file(container, build = False):
     """
     if build:
         try: 
-            container.markdown(   "Make sure that if you upload a multi-assay datafile that you have properly [decorated](https://noahhenrikkleinschmidt.github.io/qpcr/Parsers/Parsers.html#decorators) your assays!"   )
+            container.info(   "Make sure that if you upload a multi-assay datafile that you have properly [decorated](https://noahhenrikkleinschmidt.github.io/qpcr/Parsers/Parsers.html#decorators) your assays!"   )
             
             assay_files = container.file_uploader(
                                                         "Upload Input File", 
@@ -229,11 +255,12 @@ def setup_multi_assay_file(container, build = False):
             
                 # set up a reader to check if 
                 # we got a multisheet excel file
-                reader.setup(  session("assay_files")  )
+                reader.link(  session("assay_files")  )
 
 
                 # check if it's a csv file and if so set up the delimiter
                 if reader.is_csv():
+                    container.markdown(  "##### Csv Delimiter"    )
                     container.markdown(   "Qupid has identified your datafile is a `csv` file."   )
                     setup_csv_delimiter(container)
 
@@ -241,6 +268,12 @@ def setup_multi_assay_file(container, build = False):
                 # check if it's an excel file and 
                 # then check for multi-sheet...
                 if reader.is_excel():
+                    
+                    # make sure to reset the sheet_name 
+                    # just in case users try to iteratively 
+                    # change file and we don't want to save the 
+                    # sheet name between files...
+                    session("sheet_name", reset = True)
                     
                     # read the file and check 
                     # for multisheet
@@ -293,20 +326,33 @@ def setup_Id_Ct_datacols(container):
     Sets up controls for the id and Ct column  headers
     """
 
-    container.markdown(   "##### Data Columns  "   )
-    id_col = container.text_input(
-                                    "Id column",
-                                    help = "Enter the name of the column in which replicate identifiers are stored",
-                                    value = "Name",
-                                )
+    setup_Id_datacols(container)
+    setup_Ct_datacols(container)
+
+
+def setup_Ct_datacols(container):
+    """
+    Sets up controls for the Ct column  headers
+    """
     ct_col = container.text_input(
                                     "Ct column",
                                     help = "Enter the name of the column in which Ct values are stored",
                                     value = "Ct",
                                 )
-
-    session("id_col", id_col)
     session("ct_col", ct_col)
+    
+def setup_Id_datacols(container):
+    """
+    Sets up controls for the id column  header
+    """
+
+    # container.markdown(   "##### Data Columns  "   )
+    id_col = container.text_input(
+                                    "Id column",
+                                    help = "Enter the name of the column in which replicate identifiers are stored",
+                                    value = "Name",
+                                )
+    session("id_col", id_col)
 
 def setup_Assay_datacols(container):
     """
@@ -340,7 +386,7 @@ def setup_bigtable_file(container, build = False):
     if build:
 
         # specify which kind of big table is present
-        options = ["vertical", "horizontal"]
+        options = ["vertical", "horizontal", "hybrid"]
         kind = container.selectbox(
                                         "Kind of Big Table",
                                         help = "Select which kind of Big Table you have. You can [learn more about big tables here](https://noahhenrikkleinschmidt.github.io/qpcr/Readers/Readers.html#qpcr.Readers.Readers.BigTableReader).",
@@ -357,6 +403,8 @@ def setup_bigtable_file(container, build = False):
         if kind == "vertical":
             setup_Id_Ct_datacols(container)
             setup_Assay_datacols(container)
+        elif kind == "hybrid":
+            setup_Id_datacols(container)
         else:
             container.markdown(   "##### Data Columns  "   )
             setup_Assay_datacols(container)
@@ -369,7 +417,7 @@ def setup_bigtable_file(container, build = False):
             
                 # set up a reader to check if 
                 # we got a multisheet excel file
-                reader.setup(  session("assay_files")  )
+                reader.link(  session("assay_files")  )
 
                 # check if it's a csv file and if so set up the delimiter
                 if reader.is_csv():

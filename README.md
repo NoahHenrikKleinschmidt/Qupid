@@ -10,9 +10,9 @@ This is `Qupid` the stand-alone web application for easy and fast Delta-Delta-Ct
 `Qupid` allows you to automatically analyse your qPCR assays through established Delta-Delta-Ct analysis. Qupid is built as an intuitive and versatile graphical user interface to provide access to the core functionalities of the python `qpcr` module. Qupid supports a variety of differently structured `csv` or `excel` input datafiles and handles data reading, outlier filtering, delta-Ct and delta-delta-Ct computation, as well as instant data visualisation. Final results, as well as intermediary computations can be downloaded directly as `csv` files, while figures can be easily customised and saved as well. 
 
 ### Is Qupid reliable and reproducible?
-Qupid and the `qpcr` module have been tested on a variety of different input files and have reproduced existing results from conventional Delta-Delta-Ct analyses that were manually performed in excel sheets. Hence, there are currently no known issues with either Qupid or `qpcr`.
+Qupid and the `qpcr` module have been tested on a variety of different datasets and have reproduced existing results from conventional Delta-Delta-Ct analyses that were manually performed in excel sheets. Hence, there are currently no known issues with either Qupid or `qpcr` with regard to reliability.
 
-To ensure your Qupid results are reproducible, Qupid records all settings it uses to perform its computation and even the plotting in a `Session Log`. You can (and should!) download the Session Log alongside with your results. The Session Log is in `json` format and can be opened in any conventional text editor. 
+To ensure your Qupid results are reproducible, Qupid records all settings it uses to perform its computation and even plotting in a `Session Log`. You can (and should!) download the Session Log alongside with your results. The Session Log is in `json` format and can be opened in any conventional text editor. 
 
 
 ### How does it work?
@@ -20,19 +20,22 @@ It sounds a bit like you could just add some datafile of your's and Qupid will m
 
 
 ## Getting Started
-Start by checking out the [Getting Started Tutorial](https://github.com/NoahHenrikKleinschmidt/qpcr/blob/main/Examples/0_getting_started.ipynb) of the `qpcr` module to learn about the accepted types of input datafiles. Next, check out the [Decorator Tutorial](https://github.com/NoahHenrikKleinschmidt/qpcr/blob/main/Examples/8_decorating_datafiles.ipynb) to learn how to add decorators to your datafiles. After that, best try to analyse some file you have lying around to get some feeling of the app. Qupid will very dynamically adjust the types of input widgets it presents to the user to keep the interface as clean as possible, so don't get worried if new fields appear after clicking on something.
+Start by checking out the [Getting Started Tutorial](https://github.com/NoahHenrikKleinschmidt/qpcr/blob/main/Examples/0_getting_started.ipynb) of the `qpcr` module to learn about the accepted types of input datafiles. Next, check out the [Decorator Tutorial](https://github.com/NoahHenrikKleinschmidt/qpcr/blob/main/Examples/8_decorating_datafiles.ipynb) to learn how to add decorators to your datafiles. After that, best try to analyse some file you have lying around to get some feeling of how Qupid works. The app will very dynamically adjust the types of input widgets it presents to the user to keep the interface as clean as possible, so don't worry if new fields appear after clicking on something, or if they vanish.
 
+By the way, Qupid stores the settings it uses for its main computation and plotting, so you can iteratively upload different files and analyse them easily using the same parameters. 
 
 > ## Example Results
 > Here's a Preview Figure that Qupid automatically generates:
 >
-> The entire process in Qupid from File Upload until this Figure was produced took around 43 seconds.
+> By the way, the values plotted are, naturally, the final values from $2^{-\Delta\Delta Ct}$.  
+>
+> The entire process in Qupid from File Upload until this Figure was produced took around `43` seconds.
 >
 > ![](./.resources/example1.png)
 >
 > Well, the data was stored in separate files which made reading super easy and we used default settings for the main computation. 
 >
-> However, the figure below was generated from an analysis of just one single excel file containing data of six datasets (two of them normalisers), and using some custom settings for the Delta-Ct value computation. File preparation took around 25 seconds, Qupid setup took some 52 seconds. In total, 77 seconds. 
+> However, the figure below was generated from an analysis of just one single excel file containing data of six assays (two of them normalisers), and using some custom settings for the Delta-Ct value computation, plus a little figure adjustment. File preparation took around 25 seconds, Qupid setup took some 52 seconds. In total, `77` seconds (the main computation actually took `0.1048` seconds to finish). 
 >
 > ![](./.resources/example2.png)
 >

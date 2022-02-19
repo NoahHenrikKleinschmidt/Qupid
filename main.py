@@ -1,7 +1,9 @@
 import streamlit as st
 import pandas as pd
 import qpcr
-import qpcr._AddOns.Qupid as qu
+# import qpcr._AddOns.Qupid as qu
+import Qupid2 as qu
+
 import controls as ctrl
 from controls import session
 import qpcr.Filters as Filters
@@ -46,7 +48,7 @@ control_col.markdown("---")
 
 multiple_files_button = control_col.button(
                                                 "Upload multiple Files",
-                                                help = "Upload multiple single-assay datafiles. Note, these must be regular `csv` files!",
+                                                help = "Upload multiple single-assay datafiles. Note, these must be \"regular\" `csv` or `excel` files!",
                                         )
 multi_assay_button = control_col.button(
                                                 "Upload one multi-assay File",
@@ -68,7 +70,8 @@ read_button = control_col.button(
 
 # control_col.markdown(   "Please, note that is is not possible to mix data from different upload types! You can perform an analysis on data uploaded by only a single input type at a time. ")
 control_col.markdown(   "If you wish to switch between input types, you may have to click the corresponding button twice or reload the app."   )
-control_col.markdown(   "Check out [the Getting Started tutorial](https://github.com/NoahHenrikKleinschmidt/qpcr/blob/main/Examples/0_getting_started.ipynb) to the API  to learn more about valid input datafiles."   )
+control_col.markdown(   "Check out [the Getting Started tutorial](https://github.com/NoahHenrikKleinschmidt/qpcr/blob/main/Examples/0_getting_started.ipynb) to the API  to learn more about valid input datafiles. Also check out the [Decorator Tutorial](https://github.com/NoahHenrikKleinschmidt/qpcr/blob/main/Examples/8_decorating_datafiles.ipynb) to learn how to add decorators to your multi-assay datafiles."    )
+
 
 # ------------------------------------------------------------------------------------------
 # Setting up input widgets for different datafile types
@@ -82,6 +85,8 @@ if multiple_files_button or session("upload_type") ==  "multiple files":
     # reset the files 
     session("assay_files", reset = True)
     session("normaliser_files", reset = True)
+    # session("assays", reset = True)
+    # session("normalisers", reset = True)
 
     # set up input controls
     ctrl.upload_multiple_files(files_expander, build = True)
@@ -93,6 +98,8 @@ if multi_assay_button or session("upload_type") ==  "multi assay":
     
     # reset the files 
     session("assay_files", reset = True)
+    # session("assays", reset = True)
+    # session("normalisers", reset = True)
 
     # set up input controls
     ctrl.upload_single_file(files_expander, build = True)
@@ -105,6 +112,8 @@ if big_table_button or session("upload_type") ==  "big table":
 
     # reset the files 
     session("assay_files", reset = True)
+    # session("assays", reset = True)
+    # session("normalisers", reset = True)
 
     # set up input controls
     ctrl.upload_single_file(files_expander, build = True)

@@ -5,9 +5,13 @@ files and compute Delta-Delta-Delta-Ct
 
 import streamlit as st
 import qpcr
+import qpcr._auxiliary as aux
+import qpcr._auxiliary.defaults as defaults
 import controls as ctrl
 from controls import session
-import qpcr._AddOns.Qupid as qu
+# import qpcr._AddOns.Qupid as qu
+import Qupid2 as qu
+
 from copy import deepcopy 
 import datetime
 
@@ -26,116 +30,82 @@ def read():
     # reading multiple regular csv input files
     if input_type == "multiple files":
         # read regular csv file lists 
-        assays = Qreader.read_regular_csv_files( "assay_files" )
-        normalisers = Qreader.read_regular_csv_files( "normaliser_files" )
+        assay_files = session( "assay_files" )
+
+        assays = []
+        for assay in assay_files:
+            # get the datacolumns in case there are more than two
+            id_col = aux.from_kwargs( "id_col", defaults.default_id_header, st.session_state, rm = True )
+            ct_col = aux.from_kwargs( "ct_col", defaults.default_ct_header, st.session_state, rm = True )
+            # read the file
+            assay = Qreader.SingleReader_read_regular( 
+                                                        assay, 
+                                                        id_label = id_col, 
+                                                        ct_label = ct_col 
+                                                    )
+            assays.append(assay)
+
+        # now read the normalisers the same way
+        normaliser_files = session( "normaliser_files" )
+        normalisers = []
+        for assay in normaliser_files:
+            # get the datacolumns in case there are more than two
+            id_col = aux.from_kwargs( "id_col", defaults.default_id_header, st.session_state, rm = True )
+            ct_col = aux.from_kwargs( "ct_col", defaults.default_ct_header, st.session_state, rm = True )
+            # read the file
+            assay = Qreader.SingleReader_read_regular( 
+                                                        assay, 
+                                                        id_label = id_col, 
+                                                        ct_label = ct_col 
+                                                    )
+            normalisers.append(assay)
+        
+        # st.write(assays)
+        # st.write(assays[0].id(), assays[0].get())
 
 
     # reading a single multi assay file
     elif input_type == "multi assay":
+        
         # get the datafile
         file = session("assay_files")
 
-        # setup a MultiSheetReader
-        reader = qpcr.Readers.MultiReader()
-        
-        # setup the Qreader with the file
-        Qreader.setup(file)
-        
         # setup general variables used by both multisheet and singlesheet
         # get the column to search in for assays
         col = session("col")
 
+        # setup the Qreader to prep-read the 
+        # file and check for multi-sheet-ness
+        Qreader.link( file )
         if Qreader.is_excel():
-            # set up an ExcelParser
-            reader._Parser = qpcr.Parsers.ExcelParser()
-            qu.setup_parser_from_session(reader)
-
-            # pass on replicate information
-            qu.replicates_from_session(reader)
-
-            # prelim read
             Qreader.read_excel()
 
-            multi_sheet = session("multi_sheet")
-            if multi_sheet:
-                # get all sheet names
-                sheets = Qreader.sheets()
+        
+        # check if we're supposed to read all sheets of a multi-assay file
+        # if it is one at all...
+        if Qreader.is_multisheet() and session("multi_sheet"):
+            
+            try: 
+                assays, normalisers = Qreader.MultiSheetReader_read( file, col = col )
+            except:
+                st.error(  "No assays could be identified with the given settings!\nMake sure your file is decorated and you supply the right search parameters."   )
+                st.stop()
+        else:
 
-                # now read each sheet in the data
-                assays, normalisers = [], []
-                for sheet in sheets:
-                    # parse and extract data
-                    a, n = Qreader.parse_one_excel_sheet(file, reader, col, sheet)
-                    
-                    # store found assays + normalisers
-                    assays.extend(a)
-                    normalisers.extend(n)
-
-            # single-sheet read
-            else:
-                # get the sheet_name to read
-                sheet_name = qu.sheet_name_from_session(Qreader)
-
-                # parse only the one provided sheet
-                assays, normalisers = Qreader.parse_one_excel_sheet(file, reader, col, sheet_name)
-
-        else: # file is a csv file
-            # setup a CsvParser
-            reader._Parser = qpcr.Parsers.CsvParser()
-            qu.setup_parser_from_session(reader)
-
-            # pass on replicate information
-            qu.replicates_from_session(reader)
-
-            # prepare the csv file to be read 
-            # and parse the file
-            data = Qreader.read_irregular_csv()
-            assays, normalisers = Qreader.parse_csv_file(data, reader, col)
-
+            # read a single data_sheet
+            try: 
+                assays, normalisers = Qreader.MultiReader_read( file, col = col )
+            except:
+                st.error(  "No assays could be identified with the given settings!\nMake sure your file is decorated and you supply the right search parameters."   )
+                st.stop()
+        
     # reading a big table file
     elif input_type == "big table":
-        # setting up a reader
-        reader = qpcr.Readers.BigTableReader()
-
+        
         # get the datafile
         file = session("assay_files")
 
-        # setup the Qreader with the file
-        Qreader.setup(file)
-
-        # get kind of big table
-        kind = session("kind")
-        reader._kind = kind
-        is_horizontal = kind == "horizontal"
-
-        # check for excel file
-        if Qreader.is_excel():
-            # set up an ExcelParser
-            reader._Parser = qpcr.Parsers.ExcelParser()
-            qu.setup_parser_from_session(reader)
-
-            # pass on replicate information
-            qu.replicates_from_session(reader)
-
-            # prelim read
-            Qreader.read_excel()
-
-            # get sheet_name to read
-            sheet_name = qu.sheet_name_from_session(Qreader)
-
-            # parse the table and make Assays
-            assays, normalisers = Qreader.parse_excel_BigTable(file, reader, sheet_name, is_horizontal)
-
-
-        else: # read a CSV big table file
-            # setup a CsvParser
-            reader._Parser = qpcr.Parsers.CsvParser()
-            qu.setup_parser_from_session(reader)
-
-            # pass on replicate information
-            qu.replicates_from_session(reader)
-
-            assays, normalisers = Qreader.parse_csv_BigTable(reader, is_horizontal)
+        assays, normalisers = Qreader.BigTableReader_read( file )
 
     # store in session
     session("assays", assays)

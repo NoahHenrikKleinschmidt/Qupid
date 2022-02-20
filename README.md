@@ -38,7 +38,7 @@ By the way, Qupid stores the settings it uses for its main computation and plott
 >
 > However, the figure below was generated from an analysis of just one single excel file containing data of six assays (one of them the normaliser), and using some custom settings for the Delta-Ct value computation, plus a little figure adjustment. File preparation took around 25 seconds, Qupid setup took some 52 seconds. In total, `77` seconds from start to finish, with results exportable in different formats for further analysis or visualisation. 
 >
-> ![](./.resources/example2.png)
+> ![](./.resources/example2_new.png)
 >
 > At this point it should be mentioned that these figures are actually pretty customisable. So even though they are intended just as "previews" they aim to be perfectly "lab-journal worthy".
 

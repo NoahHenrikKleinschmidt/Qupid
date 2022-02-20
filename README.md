@@ -36,7 +36,7 @@ By the way, Qupid stores the settings it uses for its main computation and plott
 >
 > Well, the data was stored in separate files which made reading super easy and we used default settings for the main computation. 
 >
-> However, the figure below was generated from an analysis of just one single excel file containing data of six assays (two of them normalisers), and using some custom settings for the Delta-Ct value computation, plus a little figure adjustment. File preparation took around 25 seconds, Qupid setup took some 52 seconds. In total, `77` seconds from start to finish, results exportable in different formats for further analysis or visualisation. 
+> However, the figure below was generated from an analysis of just one single excel file containing data of six assays (one of them the normaliser), and using some custom settings for the Delta-Ct value computation, plus a little figure adjustment. File preparation took around 25 seconds, Qupid setup took some 52 seconds. In total, `77` seconds from start to finish, with results exportable in different formats for further analysis or visualisation. 
 >
 > ![](./.resources/example2.png)
 >

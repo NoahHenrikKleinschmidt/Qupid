@@ -118,8 +118,8 @@ def run_ddCt():
     """
 
     # get the assays
-    assays = session("assays")
-    normalisers = session("normalisers")
+    assays = deepcopy( session("assays") )
+    normalisers = deepcopy( session("normalisers") )
 
     # set up the ddCt pipeline
     pipe = qpcr.Pipes.ddCt()
@@ -186,6 +186,12 @@ def run_ddCt():
     figures = pipe.Figures()
     session("figures", figures)
 
+    # and also store the assay copies that 
+    # now contain the computed results
+    # We primarily do this to allow repeated analyses without affecting the 
+    # already loaded raw data...
+    session("assays_computed", assays)
+
 
 def show_filter_fig(container):
     """
@@ -198,9 +204,8 @@ def show_filter_fig(container):
 
     if filter_type is not None: 
         filter_fig_expander = container.expander("Filter Overview")
-        pre_filter, post_filter = figures[:2]
-        ctrl.add_figure(pre_filter, filter_fig_expander, chart_mode)
-        ctrl.add_figure(post_filter, filter_fig_expander, chart_mode)
+        filter_fig = figures[0]
+        ctrl.add_figure(filter_fig, filter_fig_expander, chart_mode)
 
 
 def make_preview(container):
@@ -251,4 +256,27 @@ def stats_results_table(container):
                                             "View Summary Table",
                                             # help = "Show the summary statistics table of the delta-delta-Ct results that includes mean, stdv, and median of each group of each assay."
                                     )
-    stats_expander.write(  session("results_stats")   )
+    stats_expander.table(  session("results_stats")  )
+
+
+def show_ReplicateBoxPlot(container):
+    """
+    Generates a replicate boxplot and places it in an expander.
+    """
+    # get the assays
+    assays = deepcopy( session("assays") )
+    normalisers = deepcopy( session("normalisers") )
+    assays = assays + normalisers
+
+    # setup the plotter 
+    mode = session("chart_mode")
+    plotter = qpcr.Plotters.ReplicateBoxPlot( mode = mode )
+
+    # link the assays
+    for a in assays: plotter.link( a )
+    
+    # plot and show
+    fig = plotter.plot( show = False )
+    expander = container.expander( "Overview of Replicates" )
+    ctrl.add_figure(fig, expander, mode)
+    

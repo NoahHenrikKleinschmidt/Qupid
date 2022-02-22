@@ -150,13 +150,15 @@ if session("assays") is not None and session("normalisers") is not None:
 
     controls_panel = st.container()
     controls_panel.markdown(    "---"    )
-    controls, chart_col = controls_panel.columns((1,2))
+    controls_panel.markdown(    "### Analysis Setup"    )
+    controls, _, advanced, _, run_panel = controls_panel.columns((2,1,4,1,2))
 
-    controls.markdown(    "#### Analysis Setup"    )
 
 # ----------------------------------------------------------------
 # Generic settings like Filter type and Plotter...
 # ----------------------------------------------------------------
+
+    controls.markdown(    "##### Basic Setup"    )
 
     # setup filter type selection
     ctrl.setup_filter_type(controls)
@@ -169,77 +171,101 @@ if session("assays") is not None and session("normalisers") is not None:
 # # Advances settings like Anchor...
 # # ----------------------------------------------------------------
 
-    # setup expander for advanced settings
-    more_controls_expander = controls.expander("Advanced Settings")
+    advanced.markdown(    "##### Settings "    )
+
 
     # anchor settings
-    more_controls_expander.markdown(    "###### Anchor Settings"    )
-    ctrl.setup_anchor_settings(more_controls_expander)
+    advanced.markdown(    "###### Anchor Settings"    )
+    ctrl.setup_anchor_settings(advanced)
 
     # filtering inclusion range
     if session("filter_type") is not None:
-        more_controls_expander.markdown(    "###### Filter Settings"    )
-        ctrl.setup_filter_inclusion_range(more_controls_expander)
+        advanced.markdown(    "###### Filter Settings"    )
+        ctrl.setup_filter_inclusion_range(advanced)
 
     # plotting kwargs setup
-    more_controls_expander.markdown(    "###### Plotter Settings"    )
-    ctrl.setup_plotting_kwargs(more_controls_expander)
-    ctrl.setup_drop_groups_selection(more_controls_expander)
-    ctrl.setup_drop_rel(more_controls_expander)
+    advanced.markdown(    "###### Plotter Settings"    )
+    ctrl.setup_plotting_kwargs(advanced)
+    ctrl.setup_drop_groups_selection(advanced)
+    ctrl.setup_drop_rel(advanced)
 
 # =================================================================
 # Run our analysis
 # =================================================================
 
-    controls.markdown("---")
+    run_panel.markdown("##### Run Analysis")
 
-    run_analysis = controls.button(
+    show_replicates = run_panel.checkbox(
+                                            "Show Replicate Box Plot",
+                                            value = False,
+                                            help = "Generate a Box Plot overview of all replicate groups from all assays in one figure. Note, this works with pre-filtered assays! For a view on filtering, check out the Filter Figure that is generated during Delta-Delta-Ct computation."
+                                    )
+
+    run_analysis = run_panel.checkbox(
                                     "Compute Delta-Delta-Ct",
-                                    help = "Computes Delta-Delta-Ct for all uploaded assays against an averaged version of all normalisers."
+                                    value = True,
+                                    help = "Compute Delta-Delta-Ct for all uploaded assays against an averaged version of all normalisers."
                                 )
 
-    run_plotting = controls.button(
+    run_plotting = run_panel.checkbox(
                                     "Generate Figure",
-                                    help = "Visualises the results. Note, this only affects the `Preview` figure (not the Filter figure!) is intended in case you wish to adapt the plotting parameters only and wish to save time by not re-running the entire analysis."
+                                    value = True,
+                                    help = "Visualise the results. Note, this only affects the `Preview` figure (not the Filter figure!). When this box is checked, you can edit the figure settings and do not need to push the `Run analysis` button again, the figures will automatically update!"
                                 )
 
-    run_all = controls.button(
-                                    "Run Both",
-                                    help = "Computes Delta-Delta-Ct and generates a Preview Figure"
+    run_button = run_panel.button(
+                                    "Run Analysis",
+                                    help = "Perform the selected actions."
                                 ) 
 
 
     # setup a session variable to check
     # if an analysis was run and therefore if 
     # it should be allowed to export a session log
-    if run_all:
-        run_analysis = True
-        run_plotting = True
-
-    # compute delta-delta-ct and store a session 
-    # variable stating that results should now be present.
-    if run_analysis:
-        core.run_ddCt()
-        session("analysis_was_run", True)
-    
+    if run_button:
+        # compute delta-delta-ct and store a session 
+        # variable stating that results should now be present.
+        if run_analysis:
+            core.run_ddCt()
+            session("analysis_was_run", True)
+        
+        
     analysis_was_run = True if session("analysis_was_run") is not None else False
 
-    # if we got results try to make a 
-    # filter summary, (it will check if filters were used at all..)
+# =================================================================
+# Present Results
+# =================================================================
+
+    results_container = st.container()
+
     if analysis_was_run:
-        core.show_filter_fig(chart_col)
-
-    # make a preview figure
-    if run_plotting:
-        core.make_preview(chart_col)
 
 
-    # make some download buttons and stuff..
-    if analysis_was_run: 
-        core.stats_results_table(chart_col)
-        ctrl.setup_results_downloads(chart_col)
-        ctrl.onefile_download_all_assays(chart_col)
-        ctrl.setup_session_log_download(chart_col)
+        
+        results_container.markdown( "---" )
+        results_container.markdown( "### Results")
+
+        # check if we should compute a replicate boxplot
+        if show_replicates:
+            core.show_ReplicateBoxPlot(results_container)
+        
+        # if we got results try to make a 
+        # filter summary, (it will check if filters were used at all..)
+        core.show_filter_fig(results_container)
+
+        # make a preview figure
+        if run_plotting:
+            core.make_preview(results_container)
+
+        core.stats_results_table(results_container)
+
+        # make some download buttons and stuff..
+        download_buttons = results_container.columns(4)
+
+        ctrl.setup_results_downloads(download_buttons[0])
+        ctrl.setup_summarised_download(download_buttons[1])
+        ctrl.onefile_download_all_assays(download_buttons[2])
+        ctrl.setup_session_log_download(download_buttons[3])
 
 # =================================================================
 # Footer Section

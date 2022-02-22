@@ -523,8 +523,8 @@ def setup_filter_inclusion_range(container):
         preset_range = (-1.0, 1.0) if filter_type == "Range" else (-1.5, 1.5)
         inclusion_range = container.slider(
                                                         "Filter Inclusion Range",
-                                                        min_value = -5.0, 
-                                                        max_value = 5.0, 
+                                                        min_value = -3.0, 
+                                                        max_value = 3.0, 
                                                         value = preset_range,
                                                         step = 0.1,
                                                         help = "Set the upper and lower boundries for the filter inclusion range. In case of RangeFilter this will be absolute numbers around the group median. In case of IQRFilter this will be factors n x IQR around the group median."
@@ -627,11 +627,9 @@ def setup_session_log_download(container):
 
 def setup_results_downloads(container):
     """
-    Sets up two download buttons, one for the results with replicates, 
-    one for the summary statistics table.
+    Sets up a download button the results with replicates, 
     """
     rep_results = session("results_df")
-    stats_results = session("results_stats")
 
     container.download_button(
                             "Download Results",
@@ -640,6 +638,11 @@ def setup_results_downloads(container):
                             help = "Download the final Delta-Delta-Ct results retaining all individual replicate values."
                         )
 
+def setup_summarised_download(container):
+    """
+    Sets up a download button for the summarised results table.
+    """
+    stats_results = session("results_stats")
     container.download_button(
                             "Download Summarized Results",
                             stats_results.to_csv(index = False),
@@ -653,7 +656,7 @@ def onefile_download_all_assays(container):
     file with all groups, Ct, dCt values etc.
     """
 
-    assays = session("assays")
+    assays = session("assays_computed")
     normalisers = session("normalisers")
 
 

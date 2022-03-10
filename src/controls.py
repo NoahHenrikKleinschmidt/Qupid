@@ -20,11 +20,14 @@ def add_figure(fig, container, mode):
         container.pyplot(fig, use_container_width = True)
        
 
-def session(key, value = None, reset = False):
+def session(key, value = None, reset = False, rm = False):
     """
     Adds a variable to the st.session_state or gets it.
     It returns None by default if the variable is not in session_state.
     """
+    if rm: 
+        return st.session_state.pop( key, value )
+
     if value is not None :
         st.session_state[key] = value
     elif key in st.session_state     and value is None and not reset: 
@@ -477,7 +480,73 @@ def setup_chart_mode(container):
                             )
     session("chart_mode", chart_mode)
 
+def setup_figure_type(container):
+    """
+    Sets up a select box to choose between Bar plots or Dot Plots.
+    """
+    options = ["Bar plot", "Dot plot"]
+    figure_type = container.selectbox(
+                                        "Select Figure Type",
+                                        options = options,
+                                        help = "Either choose a bar plot with mean and stdev for each group or a dot plot with the individual replicate values."
+                                    )
+    # replace the unnecessary " plot" but replace with a plural-s
+    figure_type = figure_type.replace(" plot", "s")
+    session("figure_type", figure_type)
+    if figure_type == "Dots":
+        show_violins = container.checkbox(
+                                            "Show violins",
+                                            value = False, 
+                                            help = "Show kde curves of the distributions of the shown datapoints."
+                                    )
+        return show_violins
 
+def setup_subplot_type(container):
+    """
+    Sets up a select box to choose if assays or groups should be shown
+    in different subplots
+    """
+    options = ["Assays", "Groups"]
+    subplot_type = container.selectbox(
+                                        "Select Subplot Handles",
+                                        options,
+                                        help = "Select wether to plot `assays` as separate subplots (with groups on the x-axis) or to plot `groups` as separate subplots (with assays on the x-axis)."
+                                    )
+    # crop the last (plural)-s from the assignment
+    subplot_type = subplot_type[:-1]
+    session("subplot_type", subplot_type)
+
+def setup_normaliser_mode(container):
+    """
+    Sets up a selectbox to choose the normalisation mode, as well as additional settings
+    for replacement and repeats in case of permutative normalisation. 
+    """
+    options = [ "pair-wise", "combinatoric", "permutative" ]
+    normalisation_mode = container.selectbox(
+                                                "Select normalisation mode",
+                                                help = "Choose an appropriate normalisation method. For multiplex qPCR choose `\"pair-wise\"`, otherwise you may wish to use `\"combinatoric\"` for small and `\"permutative\"` for large datasets (naturally, `\"pair-wise\"` works as well). Check out [the documentation for more details]((https://noahhenrikkleinschmidt.github.io/qpcr/index.html).",
+                                                options = options,
+                                        )
+    
+    # special settings for permutative normalisation
+    session("permutate_stack", rm = True)
+    session("permutate_replace", rm = True)
+    if normalisation_mode == "permutative":
+        stacks = container.number_input(
+                                            "Number of permutations",
+                                            help = "Select the number of times permutations should be repeated. This will generate `n * k` data points where `n` is the number of entries in the assay datasets and `k` the number of chosen repeats.",
+                                            min_value = 1,
+                                            max_value = 100,
+                                            value = 1,
+                                    )
+        session("permutate_stack", stacks)
+        allow_replace = container.checkbox(
+                                            "Allow replacement",
+                                            help = "Select this if you wish to allow replacement during the permutation process.",
+                                            value = False
+                                        )
+        session("permutate_replace", allow_replace)
+    session("normalisation_mode", normalisation_mode)
 
 def setup_anchor_settings(container):
     """
@@ -523,8 +592,8 @@ def setup_filter_inclusion_range(container):
         preset_range = (-1.0, 1.0) if filter_type == "Range" else (-1.5, 1.5)
         inclusion_range = container.slider(
                                                         "Filter Inclusion Range",
-                                                        min_value = -5.0, 
-                                                        max_value = 5.0, 
+                                                        min_value = -3.0, 
+                                                        max_value = 3.0, 
                                                         value = preset_range,
                                                         step = 0.1,
                                                         help = "Set the upper and lower boundries for the filter inclusion range. In case of RangeFilter this will be absolute numbers around the group median. In case of IQRFilter this will be factors n x IQR around the group median."
@@ -588,6 +657,16 @@ def setup_drop_groups_selection(container):
         to_ignore = [ i for i in groups if i not in to_ignore ]
     session("ignore_groups",to_ignore)
 
+def setup_tile(container):
+    """
+    Sets up a checkbox to choose to tile the assays for combinatoric ddCt computation.
+    """
+    tile = container.checkbox(
+                                "Tile assays",
+                                help = "Select this to normalise each sample-assay replicate against each replicate of the same group within the normaliser (i.e. first against first, second, third, etc.). This will supersample the Delta-Delta-Ct values to $n^2$ where $n$ is the number of replicates within a group. This will allow for more accurate error estimation but slow down computation. If this is not selected replicates are normalised pair-wise (i.e. first against first, second against second) only.",
+                                value = False
+                            )
+    session("tile", tile)
 
 def setup_drop_rel(container):
     """
@@ -627,11 +706,9 @@ def setup_session_log_download(container):
 
 def setup_results_downloads(container):
     """
-    Sets up two download buttons, one for the results with replicates, 
-    one for the summary statistics table.
+    Sets up a download button the results with replicates, 
     """
     rep_results = session("results_df")
-    stats_results = session("results_stats")
 
     container.download_button(
                             "Download Results",
@@ -640,6 +717,11 @@ def setup_results_downloads(container):
                             help = "Download the final Delta-Delta-Ct results retaining all individual replicate values."
                         )
 
+def setup_summarised_download(container):
+    """
+    Sets up a download button for the summarised results table.
+    """
+    stats_results = session("results_stats")
     container.download_button(
                             "Download Summarized Results",
                             stats_results.to_csv(index = False),
@@ -653,7 +735,7 @@ def onefile_download_all_assays(container):
     file with all groups, Ct, dCt values etc.
     """
 
-    assays = session("assays")
+    assays = session("assays_computed")
     normalisers = session("normalisers")
 
 

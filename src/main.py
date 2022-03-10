@@ -27,12 +27,12 @@ st.markdown("---")
 # upload input files for normalisers and assays
 # =================================================================
 
-st.markdown("#### Input Data")
+# st.markdown("#### Input Data")
 
 # setup the input upload type to the session
 session("upload_type", None)
 
-files_container = st.expander("Input Data File(s)", expanded = True) #.container()
+files_container = st.container()# ("Input Data File(s)", expanded = True) #.container()
 
 control_col, uploader_col = files_container.columns((1,4))
 files_expander = uploader_col#.expander("Input Data File(s)", expanded = True)
@@ -178,6 +178,10 @@ if session("assays") is not None and session("normalisers") is not None:
     advanced.markdown(    "###### Anchor Settings"    )
     ctrl.setup_anchor_settings(advanced)
 
+    # tile Settings
+    advanced.markdown(    "###### Normalisation Settings"    )
+    ctrl.setup_normaliser_mode(advanced)
+
     # filtering inclusion range
     if session("filter_type") is not None:
         advanced.markdown(    "###### Filter Settings"    )
@@ -187,7 +191,7 @@ if session("assays") is not None and session("normalisers") is not None:
     advanced.markdown(    "###### Plotter Settings"    )
     ctrl.setup_plotting_kwargs(advanced)
     ctrl.setup_drop_groups_selection(advanced)
-    ctrl.setup_drop_rel(advanced)
+    # ctrl.setup_drop_rel(advanced)
 
 # =================================================================
 # Run our analysis

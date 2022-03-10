@@ -121,13 +121,6 @@ def run_ddCt():
     assays = deepcopy( session("assays") )
     normalisers = deepcopy( session("normalisers") )
 
-    # set up the ddCt pipeline
-    pipe = qpcr.Pipes.ddCt()
-
-    # link data
-    pipe.add_assays(assays)
-    pipe.add_normalisers(normalisers)
-
 
     # add filter
     filter_type = session("filter_type")
@@ -147,31 +140,44 @@ def run_ddCt():
         chart_mode = session("chart_mode")
         Filter.plotmode(chart_mode)
         Filter.plot_params(show = False)
-        # add filter to pipe
-        pipe.add_filters(Filter)
-
+        
     # setup the Analyser
     analyser = qpcr.Analyser()
     analyser.anchor(  session("anchor"), group = session("ref_group")  )
-    pipe.Analyser(analyser)
-
     
-    # we will not include the Plotters here, 
-    # but have these work later
+    # setup the Normaliser
+    normaliser = qpcr.Normaliser()
+    norm_mode = session("normalisation_mode")
 
-    # st.write(   [i.get() for i in assays]   )
+    # setup kwargs for additional parameters for permutative normalisation
+    norm_kwargs = {}
+    if norm_mode:
+        norm_kwargs = dict(
+                            k = session("permutate_stack"),
+                            replace = session("permutate_replace")
+                        )
 
-    # run pipeline
+    # run main computation
     with st.spinner("Running analysis..."):
-        pipe.run()
+        
+        if filter_type is not None: 
+            assays = [ Filter.pipe(i) for i in assays ]
+            normalisers = [ Filter.pipe(i) for i in normalisers ]
+
+        assays = [ analyser.pipe(i) for i in assays ]
+        normalisers = [ analyser.pipe(i) for i in normalisers ]
+
+        normaliser.link( assays = assays, normalisers = normalisers )
+        normaliser.normalise( mode = norm_mode, **norm_kwargs )
+
+        # get the results    
+        results = normaliser.get()
 
     # add the Filter to allow 
     # downloading the Filter report
     if filter_type is not None:
         session("Filter", Filter)
 
-    # get and store results
-    results = pipe.get(kind = "obj")
 
     # remove the "assay" column as it is 
     # meaninglsess in the _df setting
@@ -183,7 +189,7 @@ def run_ddCt():
     session("results_df", results_df)
     results_stats = results.stats()
     session("results_stats", results_stats)
-    figures = pipe.Figures()
+    figures = [Filter.plot()] if filter_type is not None else []
     session("figures", figures)
 
     # and also store the assay copies that 
@@ -217,6 +223,14 @@ def make_preview(container):
     # to exlude groups etc. for visualisation but not for the actual data
     results = deepcopy(  session("results")  )
 
+    # setup layout container 
+    preview_expander = container.expander("Preview Results", expanded = True)
+    type_col, fig_col = preview_expander.columns((1,9))
+    show_violins = ctrl.setup_figure_type( type_col )
+    ctrl.setup_subplot_type( type_col )
+    ctrl.setup_drop_rel(type_col)
+
+
     # ignore groups that were selected for ignoring
     ignore_groups = session("ignore_groups")
     if ignore_groups != []:
@@ -228,23 +242,40 @@ def make_preview(container):
 
 
     # setup the plotter
+
+    # get plotter setup from the session
+    figure_type = session("figure_type")
+    subplot_type = session("subplot_type")
     chart_mode = session("chart_mode")
-    preview = qpcr.Plotters.PreviewResults(  mode = chart_mode  )
+    
+    # and assemble plotter 
+    plotter = subplot_type + figure_type
+
+    # and now make the PreviewResults instance 
+    preview = qpcr.Plotters.PreviewResults( mode = chart_mode, kind = plotter )
+
+
     # pass plotting kwargs
+    if figure_type == "Dots":
+        kwargs = dict( violin = show_violins )
+    else: 
+        kwargs = {}
+    
     plotting_kwargs = session("plotting_kwargs")
+    plotting_kwargs = dict( kwargs, **plotting_kwargs )
     preview.params(
                     show = False,
                     **plotting_kwargs,
                 )
+
     # link the data
     preview.link(results)
 
     # plot
     preview_fig = preview.plot()
     
-    # and add figure to an expander
-    preview_expander = container.expander("Preview Results", expanded = True)
-    ctrl.add_figure(preview_fig, preview_expander, chart_mode)
+    # and add figure
+    ctrl.add_figure(preview_fig, fig_col, chart_mode)
 
 
 def stats_results_table(container):

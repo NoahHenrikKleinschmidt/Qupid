@@ -691,6 +691,8 @@ def setup_session_log_download(container):
 
     session_log = [ string.format(i, j) for i, j in session_log.items()]
     session_log = "{\n" + "".join(session_log) + "}"
+    # remove the last trailing comma
+    session_log = session_log.replace(",\n}" , "\n}")
     now = datetime.now()
     filename = f"Qupid_session_log_{now}.json"
     container.download_button(
@@ -888,9 +890,20 @@ def make_session_log():
 
     # rename the ignore groups to avoid confusion
     if "ignore_groups" in log.keys():
-        log["ignore_groups_while_plotting"] = log["ignore_groups"]
+        # log["ignore_groups_while_plotting"] = log["ignore_groups"]
         log.pop("ignore_groups")
 
+    # remove the actual object references (since they are not readable anyway...)
+    if "assays_computed" in log.keys():
+        log.pop( "assays_computed" )
+        log.pop( "normalisers" )
+        log.pop( "assays" )
+
+    if "drop_rel" in log.keys():
+        log.pop( "drop_rel" )
+
+    # and now add ticks to make proper formatted...
+    log = {f"\"{key}\"" : f"\"{value}\"" for key, value in log.items() }
     return log
 
 

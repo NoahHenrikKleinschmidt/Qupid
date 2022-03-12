@@ -151,20 +151,19 @@ if session("assays") is not None and session("normalisers") is not None:
     controls_panel = st.container()
     controls_panel.markdown(    "---"    )
     controls_panel.markdown(    "### Analysis Setup"    )
-    controls, _, advanced, _, run_panel = controls_panel.columns((2,1,4,1,2))
+    controls_panel.markdown(    "##### Basic Setup"    )
+    controls_left, controls_right, advanced = controls_panel.columns((1,1,4))
 
 
 # ----------------------------------------------------------------
 # Generic settings like Filter type and Plotter...
 # ----------------------------------------------------------------
 
-    controls.markdown(    "##### Basic Setup"    )
-
     # setup filter type selection
-    ctrl.setup_filter_type(controls)
+    ctrl.setup_filter_type(controls_left)
 
     # setup chart mode (interactive vs static)
-    ctrl.setup_chart_mode(controls)
+    ctrl.setup_chart_mode(controls_right)
 
 
 # # ----------------------------------------------------------------
@@ -172,7 +171,6 @@ if session("assays") is not None and session("normalisers") is not None:
 # # ----------------------------------------------------------------
 
     advanced.markdown(    "##### Settings "    )
-
 
     # anchor settings
     advanced.markdown(    "###### Anchor Settings"    )
@@ -197,29 +195,30 @@ if session("assays") is not None and session("normalisers") is not None:
 # Run our analysis
 # =================================================================
 
-    run_panel.markdown("##### Run Analysis")
+    controls_left.markdown("##### Run Analysis")
 
-    show_replicates = run_panel.checkbox(
+    show_replicates = controls_left.checkbox(
                                             "Show Replicate Box Plot",
                                             value = False,
                                             help = "Generate a Box Plot overview of all replicate groups from all assays in one figure. Note, this works with pre-filtered assays! For a view on filtering, check out the Filter Figure that is generated during Delta-Delta-Ct computation."
                                     )
 
-    run_analysis = run_panel.checkbox(
-                                    "Compute Delta-Delta-Ct",
-                                    value = True,
-                                    help = "Compute Delta-Delta-Ct for all uploaded assays against an averaged version of all normalisers."
-                                )
+    # run_analysis = run_panel.checkbox(
+    #                                 "Compute Delta-Delta-Ct",
+    #                                 value = True,
+    #                                 help = "Compute Delta-Delta-Ct for all uploaded assays against an averaged version of all normalisers."
+    #                             )
 
-    run_plotting = run_panel.checkbox(
+    run_plotting = controls_left.checkbox(
                                     "Generate Figure",
                                     value = True,
                                     help = "Visualise the results. Note, this only affects the `Preview` figure (not the Filter figure!). When this box is checked, you can edit the figure settings and do not need to push the `Run analysis` button again, the figures will automatically update!"
                                 )
 
-    run_button = run_panel.button(
+    controls_left.markdown("---")
+    run_button = controls_left.button(
                                     "Run Analysis",
-                                    help = "Perform the selected actions."
+                                    help = "Compute Delta-Delta-Ct"
                                 ) 
 
 
@@ -229,9 +228,8 @@ if session("assays") is not None and session("normalisers") is not None:
     if run_button:
         # compute delta-delta-ct and store a session 
         # variable stating that results should now be present.
-        if run_analysis:
-            core.run_ddCt()
-            session("analysis_was_run", True)
+        core.run_ddCt()
+        session("analysis_was_run", True)
         
         
     analysis_was_run = True if session("analysis_was_run") is not None else False

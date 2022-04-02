@@ -9,6 +9,7 @@ import Qupid as qu
 
 from copy import deepcopy 
 from datetime import datetime
+import pandas as pd
 
 def add_figure(fig, container, mode):
     """
@@ -907,3 +908,91 @@ def make_session_log():
     return log
 
 
+
+
+
+def setup_calibration_option( container ):
+    """
+    Sets up a calibration checkbox to select calibration.
+    """
+    perform_calibration = container.checkbox(
+                                                "Calibrate assays",
+                                                help = "Compute new qPCR primer efficiencies from calbrator replicates within your assays and/or assign pre-computed efficiencies from a reference file.",
+                                        )
+    session( "perform_calibration", perform_calibration )
+
+def setup_calibration_Settings( container ):
+    """
+    Sets up a file uploader for a reference file of pre-computed values.
+    """
+    session( "efficiency_reference_file", reset = True )
+    efficiency_reference_file = container.file_uploader(
+                                                            "Upload an efficiency reference file",
+                                                            help = "If you have pre-computed qPCR primer efficiencies stored in a `csv` file you can upload them here. Note, this file must contain exactly two (named) columns containing assay ids and efficiencies."
+                                                    )
+    session( "efficiency_reference_file", efficiency_reference_file )
+    remove_calibrators = container.checkbox( 
+                                                "Remove calibrator replicates",
+                                                help = "Remove all calibrator replicates from the Assays after calibration.",
+                                                value = True
+                                    )
+    session( "remove_calibrators" , remove_calibrators )
+    
+    # also set a dilution step
+    infer_dilution = container.checkbox(
+                                            "Infer Dilution step",
+                                            help = "If you have calibrator replicates with a defined dilution step i.e. they are named `calibrator : some_name : dilution` (e.g. `calibrator : wildtype : 0.5` etc.), Qupid can automatically infer the dilution steps.",
+                                            value = True
+                                    )
+    session( "calibration_dilution", reset = True )
+    if not infer_dilution:
+        calibration_dilution = container.number_input(
+                                                        "Set Dilution Step",
+                                                        help = "Set the dilution step for your dilution series. These values are inverse, so a step of `2` is interpreted as diluting by `1 / 2` in each step. Note that this requires that all steps are equally spaced. If you have a gap in your series because you omitted a set of replicates for quality reasons, specify the dilution steps directly in the names and let Qupid infer them.",
+                                                        min_value = 2, step = 1,
+                                                    )
+        session("calibration_dilution", calibration_dilution )
+
+
+        
+    
+def setup_download_button_column_number():
+    """
+    Defines either 4 or 5 columns depending on whether or not new 
+    efficiencies were calculated. If so, then an additional column for a download
+    button for the new efficiencies should be added.
+    """
+    columns = 4
+    if calibrated_new():
+        columns += 1
+    return columns
+
+def calibrated_new():
+    calibrator = session( "Calibrator" )
+    if calibrator is not None and calibrator.computed_values() != {}:
+        return True
+    return False
+
+def calibration_download_button( container ):
+    """
+    Generates a download button to download the csv file with all efficiencies 
+    (current and newly computed)...
+    """
+    container.download_button(
+                            "Download Efficiency Table",
+                            calibrations_to_df(),
+                            mime = "text/csv",
+                            help = "Download all currently stored qPCR primer efficiencies. This will include all efficiencies that were previously loaded as well as any newly computed ones. This file can be loaded as a new reference file in the future."
+                        )
+
+
+
+def calibrations_to_df():
+    """
+    Converts the calibration efficiency dict to a dataframe
+    """
+    df = session("Calibrator").efficiencies()
+    df = pd.DataFrame( df, index = ["eff"] )
+    df = df.transpose().reset_index()
+    df = df.to_csv( index = False )
+    return df 

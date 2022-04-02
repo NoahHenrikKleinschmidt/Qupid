@@ -8,7 +8,7 @@ import qpcr
 import qpcr._auxiliary as aux
 import qpcr._auxiliary.defaults as defaults
 import controls as ctrl
-from controls import session
+from controls import add_figure, session
 import Qupid as qu
 
 from copy import deepcopy 
@@ -121,7 +121,6 @@ def run_ddCt():
     assays = deepcopy( session("assays") )
     normalisers = deepcopy( session("normalisers") )
 
-
     # add filter
     filter_type = session("filter_type")
     if filter_type is not None: 
@@ -141,6 +140,26 @@ def run_ddCt():
         Filter.plotmode(chart_mode)
         Filter.plot_params(show = False)
         
+    # setup the calibrator
+    calibrate = session( "perform_calibration" )
+    if calibrate:
+        calibrator = qpcr.Calibrator()
+        
+        # check if we have a reference file to work with
+        efficiency_file = session( "efficiency_reference_file" )
+        if efficiency_file is not None:
+            calibrator.load( efficiency_file )
+        
+        # get dilution settings if they should not be inferred.
+        dilution = session( "calibration_dilution" )
+        if dilution is not None:
+            calibrator.dilution( dilution )
+
+        remove_calibrators = session( "remove_calibrators" )
+
+        # and store calibrator in the session
+        session( "Calibrator",  calibrator ) 
+
     # setup the Analyser
     analyser = qpcr.Analyser()
     analyser.anchor(  session("anchor"), group = session("ref_group")  )
@@ -164,9 +183,17 @@ def run_ddCt():
             assays = [ Filter.pipe(i) for i in assays ]
             normalisers = [ Filter.pipe(i) for i in normalisers ]
 
-        assays = [ analyser.pipe(i) for i in assays ]
-        normalisers = [ analyser.pipe(i) for i in normalisers ]
+        if calibrate:
+            assays = [ calibrator.pipe( i, remove_calibrators = remove_calibrators ) for i in assays ]
+            normalisers = [ calibrator.pipe( i, remove_calibrators = remove_calibrators ) for i in normalisers ]
 
+        try: 
+            assays = [ analyser.pipe(i) for i in assays ]
+            normalisers = [ analyser.pipe(i) for i in normalisers ]
+        except IndexError:
+            st.error( "It seems like at least one assay is empty! If you only wish to perform calibration, make sure not to remove calibrator samples!")
+            st.stop()
+            
         normaliser.link( assays = assays, normalisers = normalisers )
         normaliser.normalise( mode = norm_mode, **norm_kwargs )
 
@@ -311,3 +338,26 @@ def show_ReplicateBoxPlot(container):
     expander = container.expander( "Overview of Replicates" )
     ctrl.add_figure(fig, expander, mode)
     
+
+def show_calibration_fig( container ):
+    """
+    Generates a calibration summarising figure for newly computed efficiencies.
+    """
+    # get values
+    calibrator = session( "Calibrator" )
+    chart_mode = session("chart_mode")
+
+    # make a new expander for the figure
+    calibration_expander = container.expander( "Calibration Lines", expanded = False )
+
+    # now check if we have any newly computed efficiencies at all or otherwise 
+    # just yield an info
+    if calibrator.computed_values() == {}: 
+        calibration_expander.info( "All efficiencies were assigned from references. Hence, there are no computations to visualise here...")
+    else:
+        # generate a plotter and link the calibrator
+        plotter = qpcr.Plotters.EfficiencyCurves( mode = chart_mode )
+        plotter.link( calibrator )
+        fig = plotter.plot( show = False )
+        add_figure( fig, calibration_expander, mode = chart_mode )
+

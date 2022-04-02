@@ -159,6 +159,9 @@ if session("assays") is not None and session("normalisers") is not None:
 # Generic settings like Filter type and Plotter...
 # ----------------------------------------------------------------
 
+    # setup calibration option
+    ctrl.setup_calibration_option( controls_left )
+
     # setup filter type selection
     ctrl.setup_filter_type(controls_left)
 
@@ -171,6 +174,11 @@ if session("assays") is not None and session("normalisers") is not None:
 # # ----------------------------------------------------------------
 
     advanced.markdown(    "##### Settings "    )
+
+    # setup calibration settings
+    if session("perform_calibration"):
+        advanced.markdown(    "###### Calibration Settings"    )
+        ctrl.setup_calibration_Settings( advanced )
 
     # anchor settings
     advanced.markdown(    "###### Anchor Settings"    )
@@ -203,11 +211,14 @@ if session("assays") is not None and session("normalisers") is not None:
                                             help = "Generate a Box Plot overview of all replicate groups from all assays in one figure. Note, this works with pre-filtered assays! For a view on filtering, check out the Filter Figure that is generated during Delta-Delta-Ct computation."
                                     )
 
-    # run_analysis = run_panel.checkbox(
-    #                                 "Compute Delta-Delta-Ct",
-    #                                 value = True,
-    #                                 help = "Compute Delta-Delta-Ct for all uploaded assays against an averaged version of all normalisers."
-    #                             )
+    if session( "perform_calibration" ):
+        show_calibration = controls_left.checkbox(
+                                        "Show Calibration Line Plot",
+                                        value = True,
+                                        help = "If any new qPCR efficiencies were computed during calibration, visualise the regression lines in a figure."
+                                    )
+    else: 
+        show_calibration = False
 
     run_plotting = controls_left.checkbox(
                                     "Generate Figure",
@@ -242,8 +253,6 @@ if session("assays") is not None and session("normalisers") is not None:
 
     if analysis_was_run:
 
-
-        
         results_container.markdown( "---" )
         results_container.markdown( "### Results")
 
@@ -255,19 +264,26 @@ if session("assays") is not None and session("normalisers") is not None:
         # filter summary, (it will check if filters were used at all..)
         core.show_filter_fig(results_container)
 
+        #  make a calibration overview figure for newly computed efficiencies
+        if show_calibration:
+            core.show_calibration_fig( results_container )
+
         # make a preview figure
         if run_plotting:
             core.make_preview(results_container)
 
         core.stats_results_table(results_container)
 
-        # make some download buttons and stuff..
-        download_buttons = results_container.columns(4)
+        # make some download buttons and stuff...
+        cols = ctrl.setup_download_button_column_number()
+        download_buttons = results_container.columns(cols)
 
         ctrl.setup_results_downloads(download_buttons[0])
         ctrl.setup_summarised_download(download_buttons[1])
         ctrl.onefile_download_all_assays(download_buttons[2])
-        ctrl.setup_session_log_download(download_buttons[3])
+        if ctrl.calibrated_new():
+            ctrl.calibration_download_button( download_buttons[3] )
+        ctrl.setup_session_log_download(download_buttons[-1])
 
 # =================================================================
 # Footer Section

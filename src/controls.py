@@ -937,7 +937,7 @@ def setup_calibration_Settings( container ):
                                                 value = True
                                     )
     session( "remove_calibrators" , remove_calibrators )
-    
+
     # also set a dilution step
     infer_dilution = container.checkbox(
                                             "Infer Dilution step",
@@ -978,9 +978,15 @@ def calibration_download_button( container ):
     Generates a download button to download the csv file with all efficiencies 
     (current and newly computed)...
     """
+    efficiency_reference_file = session( "efficiency_reference_file" )
+    if efficiency_reference_file is not None:
+        filename = efficiency_reference_file.name.split("/")[-1]
+    else: 
+        filename = "efficiencies.csv"
     container.download_button(
                             "Download Efficiency Table",
                             calibrations_to_df(),
+                            file_name = filename,
                             mime = "text/csv",
                             help = "Download all currently stored qPCR primer efficiencies. This will include all efficiencies that were previously loaded as well as any newly computed ones. This file can be loaded as a new reference file in the future."
                         )

@@ -1,5 +1,5 @@
 streamlit==1.5.0
-qpcr==3.1.4
+qpcr==3.1.5
 pandas==1.3.4
 plotly==5.1.0
 attrs==21.2.0

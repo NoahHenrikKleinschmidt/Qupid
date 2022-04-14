@@ -157,6 +157,9 @@ def run_ddCt():
 
         remove_calibrators = session( "remove_calibrators" )
 
+        # setup which action to perform for 
+        ignore_uncalibratable = session( "ignore_uncalibratable" )
+
         # and store calibrator in the session
         session( "Calibrator",  calibrator ) 
 
@@ -184,8 +187,8 @@ def run_ddCt():
             normalisers = [ Filter.pipe(i) for i in normalisers ]
 
         if calibrate:
-            assays = [ calibrator.pipe( i, remove_calibrators = remove_calibrators ) for i in assays ]
-            normalisers = [ calibrator.pipe( i, remove_calibrators = remove_calibrators ) for i in normalisers ]
+            assays = [ calibrator.pipe( i, remove_calibrators = remove_calibrators, ignore_uncalibrated = ignore_uncalibratable ) for i in assays ]
+            normalisers = [ calibrator.pipe( i, remove_calibrators = remove_calibrators, ignore_uncalibrated = ignore_uncalibratable ) for i in normalisers ]
 
         try: 
             assays = [ analyser.pipe(i) for i in assays ]

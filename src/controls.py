@@ -938,6 +938,13 @@ def setup_calibration_Settings( container ):
                                     )
     session( "remove_calibrators" , remove_calibrators )
 
+    ignore_uncalibratable = container.checkbox(
+                                                "Ignore non-calibratable",
+                                                help = "Ignore any assays that can neither be newly calibrated nor be assigned an efficiency. If un-selected, Qupid will raise an Error if any assay cannot be calibrated.",
+                                                value = True
+                                            )
+    session( "ignore_uncalibratable", ignore_uncalibratable )
+    
     # also set a dilution step
     infer_dilution = container.checkbox(
                                             "Infer Dilution step",

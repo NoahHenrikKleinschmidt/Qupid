@@ -422,7 +422,7 @@ def setup_filter_type(container):
     """
     Sets up a radio button to select which filter to use
     """
-    options = ["Range", "IQR", "None"]
+    options = ["None", "Range", "IQR"]
     filter_type = container.radio(
         "Select Filter",
         options=options,

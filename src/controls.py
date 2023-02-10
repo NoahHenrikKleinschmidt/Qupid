@@ -437,7 +437,7 @@ def setup_chart_mode(container):
     """
     Sets up a radio button to select interactive or static figure mode
     """
-    options = ["interactive", "static"]
+    options = ["static", "interactive"]
     chart_mode = container.radio("Select Plotting Mode", options=options, help="Select which type of plot to display. Either an interactive plot, or a static figure.")
     session("chart_mode", chart_mode)
 

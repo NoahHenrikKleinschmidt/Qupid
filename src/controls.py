@@ -7,6 +7,7 @@ import streamlit as st
 import qpcr
 import Qupid as qu
 
+from itertools import combinations
 from copy import deepcopy
 from datetime import datetime
 import pandas as pd
@@ -556,7 +557,7 @@ def setup_plotting_kwargs(container):
     # plotting kwargs setup
     plotting_kwargs = container.text_area(
         "Plotting parameters",
-        placeholder="""color = 'green'\ntitle = 'my figure'\nfigsize = (8, 3)""",
+        placeholder="""color = 'green', title = 'my figure', figsize = (8, 3)""",
         help="You can specify various plotting arguments (or in short: plotting `kwargs` for 'keyword arguments')to fine-tune the preview figures generated. Note, that this requires some knowledge of either matplotlib's or plotly's accepted arguments for figures and subplots, because the different plotting methods accept different kinds of plotting kwargs. You can [learn more in the documentation](https://noahhenrikkleinschmidt.github.io/qpcr/Plotters/Plotters.html) of the `qpcr` module.",
     )
     # pre-process kwargs into a dict
@@ -715,6 +716,15 @@ def onefile_download_all_assays(container):
     )
 
 
+def setup_tests_download(container):
+    """
+    Sets up a download button for the tests results table.
+    """
+    tests_results = session("test_results")
+    if tests_results:
+        container.download_button("Download Tests Results", tests_results.to_df().to_csv(index=False), mime="text/csv", help="Download the statistical test results.")
+
+
 def vet_all_assays_grouped():
     """
     Checks if all assays could be grouped using the specified parameters,
@@ -812,6 +822,8 @@ def make_session_log():
     if session("filter_type") is None and session("Filter") is not None:
         if "inclusion_range" in log.keys():
             to_remove.append("inclusion_range")
+    if "test_results" in log.keys():
+        to_remove.append("test_results")
 
     # remove the keys
     for i in to_remove:
@@ -890,6 +902,8 @@ def setup_download_button_column_number():
     columns = 4
     if calibrated_new():
         columns += 1
+    if session("test_results"):
+        columns += 1
     return columns
 
 
@@ -928,3 +942,42 @@ def calibrations_to_df():
     df = df.transpose().reset_index()
     df = df.to_csv(index=False)
     return df
+
+
+def setup_statistical_tests(container):
+    """
+    Setup controls for tuning the statistical tests to perform.
+    """
+    container.markdown("##### Statistical Tests")
+
+    # add a checkbox to select either T-tests or ANOVA
+    test_mode = container.radio(
+        "Statistical Test",
+        options=["T-tests", "ANOVA"],
+        help="Select the statistical tests to perform. Multiple T-tests are performed on individual assays or groups, while ANOVA is performed on all assays or groups at once.",
+    )
+    session("test_mode", test_mode)
+
+    if test_mode == "T-tests":
+        container.info("When performing multiple T-tests the significance bars can only be visualized in static figures!")
+
+    # add a selection for which mode to use (assay-wise or groupwise)
+    comparison = container.radio(
+        "Comparison", options=["Groups in Assays", "Assays across Groups"], help="Select whether to perform the statistical tests to compare the different groups within each assay separately, or to compare the assays the different groups."
+    )
+    session("comparison", comparison)
+
+    # add a selection to choose specific pairs to compare if t-tests are performed
+    if test_mode == "T-tests":
+        if comparison == "Groups in Assays":
+            available_pairs = session("group_names")
+        elif comparison == "Assays across Groups":
+            available_pairs = session("assay_names")
+
+        available_pairs = list(combinations(available_pairs, r=2))
+        selected_pairs = container.multiselect(
+            "Select Pairs to Compare",
+            options=available_pairs,
+            help="Select the pairs of groups or assays to compare. If none are selected, all possible pairs will be compared.",
+        )
+        session("selected_pairs", selected_pairs)

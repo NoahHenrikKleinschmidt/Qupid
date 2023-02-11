@@ -5,6 +5,7 @@ files and compute Delta-Delta-Delta-Ct
 
 import streamlit as st
 import qpcr
+import qpcr.stats as qstats
 import qpcr._auxiliary as aux
 import qpcr.defaults as defaults
 import controls as ctrl
@@ -186,6 +187,14 @@ def run_ddCt():
         # get the results
         results = normaliser.get()
 
+        drop_rel = session("drop_rel")
+        if drop_rel:
+            results.drop_rel()
+
+    # now check if we should perform statistics
+    if session("perform_stats_tests"):
+        perform_statistical_tests(results)
+
     # add the Filter to allow
     # downloading the Filter report
     if filter_type is not None:
@@ -240,18 +249,11 @@ def make_preview(container):
     type_col, fig_col = preview_expander.columns((1, 9))
     show_violins = ctrl.setup_figure_type(type_col)
     ctrl.setup_subplot_type(type_col)
-    ctrl.setup_drop_rel(type_col)
 
     # ignore groups that were selected for ignoring
     ignore_groups = session("ignore_groups")
     if ignore_groups != []:
         results.drop_groups(ignore_groups)
-
-    drop_rel = session("drop_rel")
-    if drop_rel:
-        results.drop_rel()
-
-    # setup the plotter
 
     # get plotter setup from the session
     figure_type = session("figure_type")
@@ -261,9 +263,6 @@ def make_preview(container):
     # and assemble plotter
     plotter = subplot_type + figure_type
 
-    # and now make the PreviewResults instance
-    preview = qpcr.Plotters.PreviewResults(mode=chart_mode, kind=plotter)
-
     # pass plotting kwargs
     if figure_type == "Dots":
         kwargs = dict(violin=show_violins)
@@ -272,16 +271,10 @@ def make_preview(container):
 
     plotting_kwargs = session("plotting_kwargs")
     plotting_kwargs = dict(kwargs, **plotting_kwargs)
-    preview.params(
-        show=False,
-        **plotting_kwargs,
-    )
-
-    # link the data
-    preview.link(results)
+    plotting_kwargs["show"] = False
 
     # plot
-    preview_fig = preview.plot()
+    preview_fig = results.preview(mode=chart_mode, kind=plotter, **plotting_kwargs)
 
     # and add figure
     ctrl.add_figure(preview_fig, fig_col, chart_mode)
@@ -343,3 +336,60 @@ def show_calibration_fig(container):
         plotter.link(calibrator)
         fig = plotter.plot(show=False)
         add_figure(fig, calibration_expander, mode=chart_mode)
+
+
+# a mapping of stats test functions from qpcr
+test_mapping = {  # func, arg of pairs
+    (True, True): (qstats.assaywise_ttests, "groups"),
+    (True, False): (qstats.groupwise_ttests, "columns"),
+    (False, True): (qstats.assaywise_anova, None),
+    (False, False): (qstats.groupwise_anova, None),
+}
+
+
+def perform_statistical_tests(results):
+
+    # get the statistical tests
+    t_test = session("test_mode") == "T-tests"
+    assaywise = session("comparison") == "Groups in Assays"
+    pairs = session("selected_pairs")
+    if pairs == []:
+        pairs = None
+
+    # get the test function
+    test_func, arg = test_mapping[(t_test, assaywise)]
+    test_kwargs = {}
+    if t_test:
+        test_kwargs[arg] = pairs
+
+    # perform the test
+    test_results = test_func(results, **test_kwargs)
+
+    # store the results
+    session("test_results", test_results)
+
+
+def show_anova_table(container):
+    """
+    Generates a new expander and places the results_stats dataframe in it
+    for inspection.
+    """
+    test_results = session("test_results")
+    anova = session("test_mode") == "ANOVA"
+
+    if not (anova and test_results):
+        return
+
+    expander = container.expander("ANOVA Table")
+    expander.table(test_results.to_df())
+
+
+def show_ttest_table(container):
+    test_results = session("test_results")
+    ttests = session("test_mode") == "T-tests"
+
+    if not (ttests and test_results):
+        return
+
+    expander = container.expander("T-Tests Table")
+    expander.table(test_results.to_df())

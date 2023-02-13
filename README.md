@@ -2,7 +2,7 @@
 
 ##  <font style="color:rgb(255, 82, 88)">Qu</font>antitative <font style="color:rgb(255, 82, 88)">P</font>CR <font style="color:rgb(255, 82, 88)">I</font>nterface to <font style="color:rgb(255, 82, 88)">D</font>elta-Delta-Ct
 
-[![Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://noahhenrikkleinschmidt-qupid-srcmain-27ow9a.streamlit.app)
+[![Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://noahhenrikkleinschmidt-qupid-srcmain-48pd7p.streamlit.app)
 
 This is `Qupid` the stand-alone web application for easy and fast Delta-Delta-Ct analysis of qPCR data provided by the  <a href = "https://github.com/NoahHenrikKleinschmidt/qpcr.git">qpcr python package</a>. 
 
@@ -28,8 +28,6 @@ By the way, Qupid stores the settings it uses for its main computation and plott
 > ## Example Results
 > Here's a Preview Figure that Qupid automatically generates:
 >
-> By the way, the values plotted are, naturally, the final values from $2^{-\Delta\Delta Ct}$.  
->
 > The entire process in Qupid from File Upload until this Figure was produced took around `43` seconds.
 >
 > ![](./.resources/example1.png)
@@ -46,4 +44,4 @@ By the way, Qupid stores the settings it uses for its main computation and plott
 
 #### Citation 
 
-Kleinschmidt, N. (2022). Qupid - Quantitative PCR Interface to Delta-Delta-Ct, a web-application for swift Delta-Delta-Ct analysis of qPCR data. (Version 1.0.0) [Computer software]. https://github.com/NoahHenrikKleinschmidt/Qupid.git
+Kleinschmidt, N. (2023). Qupid - Quantitative PCR Interface to Delta-Delta-Ct, a web-application for swift Delta-Delta-Ct analysis of qPCR data. (Version 1.1.0) [Computer software]. https://github.com/NoahHenrikKleinschmidt/Qupid.git

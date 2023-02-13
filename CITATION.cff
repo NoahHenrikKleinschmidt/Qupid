@@ -6,10 +6,10 @@ authors:
     family-names: Kleinschmidt
     given-names: Noah
 cff-version: "1.1.0"
-date-released: 2022-02-07
+date-released: 2023-02-11
 license: "GPL-3.0"
-message: "When using this package to analyse your data, please, cite accordingly. Good luck with your research!"
+message: "When using this app to analyze your data, please, cite accordingly. Good luck with your research!"
 repository-code: "https://github.com/NoahHenrikKleinschmidt/Qupid.git"
 title: "Qupid - Quantitative PCR Interface to Delta-Delta-Ct, a web-application for swift Delta-Delta-Ct analysis of qPCR data."
-version: "1.0.0"
+version: "1.1.0"
 ...
